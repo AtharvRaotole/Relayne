@@ -35,7 +35,7 @@ export function DashboardPreviewMockup() {
               className="text-sm font-semibold text-white"
               style={{ fontFamily: "var(--font-display)" }}
             >
-              PropOS
+              Relayne
             </span>
             <span className="ml-auto flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-green-400 animate-pulse" />
@@ -68,7 +68,7 @@ export function DashboardPreviewMockup() {
         <div className="flex-1 p-4 space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-gray-900">
-              Overview — Portfolio trending up
+              Overview. Portfolio trending up
             </h2>
             <span className="text-xs text-gray-400">Last 7 days</span>
           </div>
@@ -104,7 +104,7 @@ export function DashboardPreviewMockup() {
                 Work Order Activity
               </span>
               <span className="text-[10px] flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-[var(--brand-500)]" />
+                <span className="h-2 w-2 rounded-full bg-gray-500" />
                 Created
               </span>
               <span className="text-[10px] flex items-center gap-1">
@@ -116,7 +116,7 @@ export function DashboardPreviewMockup() {
               {[40, 55, 45, 70, 60, 50, 65].map((h, i) => (
                 <div
                   key={i}
-                  className="flex-1 rounded-t bg-[var(--brand-500)]/30"
+                  className="flex-1 rounded-t bg-gray-300"
                   style={{ height: `${h}%` }}
                 />
               ))}
@@ -164,7 +164,7 @@ export function DashboardPreviewMockup() {
                     </td>
                     <td className="px-3 py-2">
                       {row.ai ? (
-                        <span className="flex items-center gap-1 text-[var(--brand-600)]">
+                        <span className="flex items-center gap-1 text-gray-700">
                           <Bot className="h-2.5 w-2.5" /> AI
                         </span>
                       ) : (
@@ -199,7 +199,7 @@ function NavItem({
           : "text-[var(--sidebar-text)] hover:bg-[var(--sidebar-surface)]/50 hover:text-[var(--sidebar-text-active)]"
       }`}
     >
-      <span className={active ? "text-[var(--brand-400)]" : ""}>{icon}</span>
+      <span className={active ? "text-gray-400" : ""}>{icon}</span>
       {children}
     </div>
   );

@@ -1,5 +1,5 @@
 /**
- * Mock data for PropOS frontend - matches API shape from 02_API_ROUTES.md
+ * Mock data for Relayne frontend - matches API shape from 02_API_ROUTES.md
  */
 
 export const mockProperties = [
@@ -123,7 +123,7 @@ export const mockAgentLogs = [
     createdAt: "2025-02-23T09:15:00Z",
     durationMs: 847,
     tokensUsed: 2341,
-    reasoning: "Tenant reported AC failure. Unit 4B has HVAC history. Dispatching QuickCool HVAC — 2.1hr avg response, 4.8★ rating.",
+    reasoning: "Tenant reported AC failure. Unit 4B has HVAC history. Dispatching QuickCool HVAC, 2.1hr avg response, 4.8★ rating.",
     steps: [
       { toolCalls: [{ tool: "classify_intent", input: { message: "AC not working", unit: "4B" } }] },
       { toolCalls: [{ tool: "dispatch_vendor", input: { trade: "HVAC", priority: "HIGH" } }] },

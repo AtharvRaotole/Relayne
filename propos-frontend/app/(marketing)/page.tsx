@@ -34,7 +34,7 @@ const ESCALATION_REASONS = [
   "Fair Housing concern detected in tenant communication",
   "Invoice 3× above benchmark for this trade",
   "Emergency work order open for 2+ hours with no vendor response",
-  "Eviction notice requested — legal review required",
+  "Eviction notice requested, legal review required",
   "Tenant using threatening language",
 ];
 
@@ -52,10 +52,7 @@ export default function LandingPage() {
       {/* Section 1: Hero */}
       <section
         className="relative pt-32 pb-16 md:pt-40 md:pb-24"
-        style={{
-          background: "#f8fafc",
-          backgroundImage: `radial-gradient(ellipse 80% 50% at 50% 0%, rgba(99,102,241,0.06), transparent)`,
-        }}
+        style={{ background: "#f8fafc" }}
       >
         <div className="mx-auto max-w-3xl px-6 text-center">
           <motion.div
@@ -65,7 +62,7 @@ export default function LandingPage() {
             className="mb-6 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse" />
-            Now in early access — join 200+ property managers
+            Now in early access. Join 200+ property managers.
           </motion.div>
 
           <motion.h1
@@ -77,7 +74,7 @@ export default function LandingPage() {
           >
             The AI coordinator for
             <br />
-            <span className="text-[var(--brand-600)]">property operations</span>
+            <span className="text-gray-600">property operations</span>
           </motion.h1>
 
           <motion.p
@@ -86,8 +83,8 @@ export default function LandingPage() {
             transition={{ duration: 0.4, delay: 0.15 }}
             className="mx-auto mt-4 max-w-xl text-center text-[17px] leading-relaxed text-gray-500"
           >
-            PropOS handles vendor dispatch, tenant communication, and compliance
-            work — end-to-end, autonomously. Your team reviews exceptions, not
+            Relayne handles vendor dispatch, tenant communication, and compliance
+            work, end-to-end and autonomously. Your team reviews exceptions, not
             tickets.
           </motion.p>
 
@@ -139,15 +136,15 @@ export default function LandingPage() {
             className="relative mt-16 mx-auto max-w-5xl"
           >
             <div
-              className="absolute inset-0 -z-10 scale-90 rounded-3xl blur-3xl opacity-60"
-              style={{ background: "rgba(99,102,241,0.15)" }}
+              className="absolute inset-0 -z-10 scale-90 rounded-3xl blur-3xl opacity-30"
+              style={{ background: "rgba(0,0,0,0.03)" }}
             />
             <div
               className="overflow-hidden rounded-2xl border border-gray-200 shadow-2xl"
               style={{
                 transform: "perspective(1200px) rotateX(3deg)",
                 transformOrigin: "center top",
-                boxShadow: "0 30px 80px -10px rgba(99,102,241,0.2)",
+                boxShadow: "0 30px 80px -10px rgba(0,0,0,0.12)",
               }}
             >
               <div className="border-b border-gray-200 bg-gray-50 px-4 py-2.5 flex items-center gap-2">
@@ -158,7 +155,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex-1 mx-4">
                   <div className="mx-auto max-w-xs rounded-md border border-gray-200 bg-white px-3 py-1 text-center text-xs text-gray-400">
-                    app.propos.ai/dashboard
+                    app.relayne.ai/dashboard
                   </div>
                 </div>
               </div>
@@ -196,9 +193,9 @@ export default function LandingPage() {
       </section>
 
       {/* Section 3: How it works */}
-      <section className="py-24 bg-white">
+      <section className="py-24 bg-gray-50">
         <div className="mx-auto max-w-5xl px-6">
-          <SectionLabel>How PropOS Works</SectionLabel>
+          <SectionLabel>How Relayne Works</SectionLabel>
           <h2
             className="text-center text-4xl font-bold tracking-tight text-gray-950 mb-4"
             style={{ fontFamily: "var(--font-display)" }}
@@ -208,31 +205,31 @@ export default function LandingPage() {
             <span className="text-gray-400">without touching your inbox</span>
           </h2>
           <p className="mx-auto mb-16 max-w-md text-center text-gray-500">
-            PropOS operates as a full coordinator — reading, deciding,
+            Relayne operates as a full coordinator, reading, deciding,
             dispatching, and closing the loop.
           </p>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3 relative">
-            <div className="absolute top-12 left-[calc(33%-16px)] right-[calc(33%-16px)] hidden h-px md:block bg-gradient-to-r from-gray-200 via-[var(--brand-300)] to-gray-200" />
+            <div className="absolute top-12 left-[calc(33%-16px)] right-[calc(33%-16px)] hidden h-px md:block bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200" />
             <StepCard
               number="01"
               icon={<Inbox className="h-5 w-5" />}
               title="Tenant sends message"
-              description="Via email, SMS, or portal. PropOS reads, classifies intent, and identifies the unit and issue type — instantly."
+              description="Via email, SMS, or portal. Relayne reads, classifies intent, and identifies the unit and issue type, instantly."
               highlight="Any channel, fully unified"
             />
             <StepCard
               number="02"
               icon={<Bot className="h-5 w-5" />}
               title="AI coordinates the fix"
-              description="PropOS selects the right vendor, checks availability, sends dispatch, and notifies the tenant with an ETA."
+              description="Relayne selects the right vendor, checks availability, sends dispatch, and notifies the tenant with an ETA."
               highlight="No human touchpoint needed"
             />
             <StepCard
               number="03"
               icon={<CheckCircle className="h-5 w-5" />}
               title="Closed, logged, synced"
-              description="After completion, PropOS reconciles the invoice, updates the PMS, and logs everything for audit."
+              description="After completion, Relayne reconciles the invoice, updates the PMS, and logs everything for audit."
               highlight="Full paper trail, always"
             />
           </div>
@@ -243,7 +240,7 @@ export default function LandingPage() {
       <FeatureSection
         label="Vendor Coordination"
         title="Dispatch the right vendor in seconds, not hours"
-        description="Our AI scores vendors by response time, rating, trade match, and proximity. It dispatches, follows up, and escalates if no response — all automatically."
+        description="Our AI scores vendors by response time, rating, trade match, and proximity. It dispatches, follows up, and escalates if no response, all automatically."
         points={[
           "PO auto-generated within pre-approved thresholds",
           "Vendor performance tracked per property",
@@ -253,10 +250,10 @@ export default function LandingPage() {
           <div className="rounded-lg border border-gray-100 bg-gray-50/50 p-4">
             <div className="text-xs font-medium text-gray-500 mb-3">Vendor Comparison</div>
             <div className="space-y-2">
-              {["QuickFix HVAC — 2.1hr · 4.8★", "CoolPro — 4.5hr · 4.6★", "AC Masters — 1.8hr · 4.9★"].map((v, i) => (
+              {["QuickFix HVAC, 2.1hr · 4.8★", "CoolPro, 4.5hr · 4.6★", "AC Masters, 1.8hr · 4.9★"].map((v, i) => (
                 <div key={i} className="flex items-center justify-between rounded bg-white px-3 py-2 text-sm">
                   <span>{v}</span>
-                  <span className="text-[var(--brand-600)] font-medium">Selected</span>
+                  <span className="text-gray-700 font-medium">Selected</span>
                 </div>
               ))}
             </div>
@@ -266,7 +263,7 @@ export default function LandingPage() {
       <FeatureSection
         label="Tenant Intelligence"
         title="Know every tenant's history before you respond"
-        description="PropOS tracks every interaction, complaint, and satisfaction signal. It predicts churn risk 90 days out and triggers renewal outreach automatically."
+        description="Relayne tracks every interaction, complaint, and satisfaction signal. It predicts churn risk 90 days out and triggers renewal outreach automatically."
         points={[
           "Churn risk score per tenant",
           "Unified multi-channel conversation history",
@@ -275,7 +272,7 @@ export default function LandingPage() {
         mockup={
           <div className="rounded-lg border border-gray-100 bg-gray-50/50 p-4">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-medium text-gray-900">Sarah M. — Unit 4B</span>
+              <span className="text-xs font-medium text-gray-900">Sarah M., Unit 4B</span>
               <span className="rounded px-1.5 py-0.5 text-[10px] font-medium bg-amber-50 text-amber-700">42% churn risk</span>
             </div>
             <div className="h-2 w-full rounded-full bg-gray-200">
@@ -289,7 +286,7 @@ export default function LandingPage() {
       <FeatureSection
         label="Compliance"
         title="Never miss an inspection or filing deadline again"
-        description="PropOS knows the compliance requirements for every jurisdiction you operate in. It tracks deadlines, auto-generates legally correct notices, and logs proof of completion."
+        description="Relayne knows the compliance requirements for every jurisdiction you operate in. It tracks deadlines, auto-generates legally correct notices, and logs proof of completion."
         points={[
           "Jurisdiction-specific rulesets",
           "Legal notice generation with one click",
@@ -299,7 +296,7 @@ export default function LandingPage() {
           <div className="rounded-lg border border-gray-100 bg-gray-50/50 p-4">
             <div className="text-xs font-medium text-gray-500 mb-3">This Week</div>
             <div className="space-y-2">
-              {["Elevator inspection — 100 Main", "Sprinkler test — Park Ave", "Fire drill — Tower B"].map((t, i) => (
+              {["Elevator inspection, 100 Main", "Sprinkler test, Park Ave", "Fire drill, Tower B"].map((t, i) => (
                 <div key={i} className="flex items-center gap-2 rounded bg-white px-3 py-2 text-sm">
                   <span className={`h-2 w-2 rounded-full ${i === 0 ? "bg-red-500" : "bg-green-500"}`} />
                   {t}
@@ -312,7 +309,7 @@ export default function LandingPage() {
       <FeatureSection
         label="Intelligence"
         title="See your next $2M in CapEx before you need it"
-        description="PropOS analyzes your repair history to identify aging components — and produces a 3–5 year capital expenditure forecast per property. No spreadsheets."
+        description="Relayne analyzes your repair history to identify aging components and produces a 3 to 5 year capital expenditure forecast per property. No spreadsheets."
         points={[
           "Pattern detection across work order history",
           "Cost projections by component",
@@ -324,7 +321,7 @@ export default function LandingPage() {
               {[2025, 2026, 2027].map((y, i) => (
                 <div key={y} className="flex-1 flex flex-col items-center">
                   <div
-                    className="w-full rounded-t bg-[var(--brand-500)]/40"
+                    className="w-full rounded-t bg-gray-300"
                     style={{ height: `${40 + i * 25}px` }}
                   />
                   <span className="text-[10px] text-gray-500 mt-1">{y}</span>
@@ -348,7 +345,7 @@ export default function LandingPage() {
         <div className="relative z-10 mx-auto max-w-5xl px-6">
           <div className="grid grid-cols-1 gap-16 lg:grid-cols-2 items-center">
             <div>
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[var(--brand-500)]/30 bg-[var(--brand-500)]/20 px-3 py-1 text-xs font-medium text-[var(--brand-300)]">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-gray-600/30 bg-gray-800 px-3 py-1 text-xs font-medium text-gray-300">
                 <Sparkles className="h-3.5 w-3.5" />
                 Human in the loop
               </div>
@@ -356,12 +353,12 @@ export default function LandingPage() {
                 className="text-4xl font-bold tracking-tight mb-5"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                PropOS handles 80%.
+                Relayne handles 80%.
                 <br />
-                <span className="text-[var(--brand-400)]">You handle the 20% that matters.</span>
+                <span className="text-gray-300">You handle the 20% that matters.</span>
               </h2>
               <p className="mb-8 text-[17px] leading-relaxed text-gray-400">
-                The AI knows exactly when it's out of its depth — legal language,
+                The AI knows exactly when it's out of its depth: legal language,
                 Fair Housing concerns, large expenses, hostile tenants. It stops,
                 assembles full context, and presents you with a 30-second
                 decision, not a 30-minute investigation.
@@ -372,8 +369,8 @@ export default function LandingPage() {
                     key={reason}
                     className="flex items-center gap-3 text-sm text-gray-300"
                   >
-                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[var(--brand-500)]/20">
-                      <Check className="h-3 w-3 text-[var(--brand-400)]" />
+                    <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-700">
+                      <Check className="h-3 w-3 text-gray-300" />
                     </div>
                     {reason}
                   </div>
@@ -404,7 +401,7 @@ export default function LandingPage() {
             <TrustPoint
               icon={<Eye className="h-5 w-5" />}
               title="Full reasoning log"
-              body="See exactly why PropOS made each decision."
+              body="See exactly why Relayne made each decision."
             />
             <TrustPoint
               icon={<History className="h-5 w-5" />}
@@ -434,7 +431,7 @@ export default function LandingPage() {
             <MetricCard
               stat="78%"
               label="of maintenance tickets"
-              sublabel="handled end-to-end by PropOS"
+              sublabel="handled end-to-end by Relayne"
               delta="+23% vs industry avg"
               positive
             />
@@ -449,7 +446,7 @@ export default function LandingPage() {
               stat="94%"
               label="SLA compliance rate"
               sublabel="across all work orders"
-              delta="+31% vs without PropOS"
+              delta="+31% vs without Relayne"
               positive
             />
             <MetricCard
@@ -461,7 +458,7 @@ export default function LandingPage() {
             />
           </div>
           <Testimonial
-            quote="We went from 1 coordinator per 180 units to 1 coordinator per 650 units. PropOS handles the routine — our team handles relationships and exceptions."
+            quote="We went from 1 coordinator per 180 units to 1 coordinator per 650 units. Relayne handles the routine. Our team handles relationships and exceptions."
             author="Sarah K."
             role="VP Operations, Pinnacle Residential (4,200 units)"
           />
@@ -478,7 +475,7 @@ export default function LandingPage() {
             Ready to run operations on autopilot?
           </h2>
           <p className="mb-8 text-lg text-gray-400">
-            Join 1,200+ properties already using PropOS. First 30 days free.
+            Join 1,200+ properties already using Relayne. First 30 days free.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <Button

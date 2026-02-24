@@ -59,7 +59,7 @@ export default function WorkOrderDetailPage({
             <div className="flex justify-between">
               <dt className="text-gray-500">Vendor</dt>
               <dd className="font-medium text-gray-900">
-                {wo.vendor?.companyName ?? "—"}
+                {wo.vendor?.companyName ?? "N/A"}
               </dd>
             </div>
           </dl>

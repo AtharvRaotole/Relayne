@@ -26,12 +26,12 @@ export default function CompliancePage() {
         <div className="space-y-4">
           <h3 className="text-sm font-semibold text-gray-900">Overdue</h3>
           <div className="rounded-lg border border-gray-100 bg-white p-3">
-            <p className="text-sm font-medium">Elevator Annual Inspection — 100 Main St</p>
+            <p className="text-sm font-medium">Elevator Annual Inspection, 100 Main St</p>
             <p className="text-xs text-red-600">3 days overdue</p>
           </div>
           <h3 className="text-sm font-semibold text-gray-900">Due This Week</h3>
           <div className="rounded-lg border border-gray-100 bg-white p-3">
-            <p className="text-sm font-medium">Sprinkler Test — Park Ave</p>
+            <p className="text-sm font-medium">Sprinkler Test, Park Ave</p>
             <p className="text-xs text-amber-600">Due in 2 days</p>
           </div>
         </div>

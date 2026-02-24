@@ -114,7 +114,7 @@ export function Sidebar() {
             className="text-sm font-semibold text-white"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            PropOS
+            Relayne
           </span>
         </Link>
         <div className="ml-auto flex items-center gap-1.5">

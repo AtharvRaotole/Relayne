@@ -93,7 +93,7 @@ export default function WorkOrdersPage() {
                   <StatusBadge status={wo.status as any} />
                 </td>
                 <td className="px-4 py-3 text-xs text-gray-700 truncate max-w-[120px]">
-                  {wo.vendor?.companyName || "—"}
+                  {wo.vendor?.companyName || "N/A"}
                 </td>
                 <td className="px-4 py-3">
                   {wo.aiHandled ? (

@@ -22,7 +22,7 @@ export function Navbar() {
                 <div
                   key={i}
                   className={`h-1.5 w-1.5 rounded-[2px] ${
-                    i === 3 ? "bg-[var(--brand-500)]" : "bg-white/80"
+                    i === 3 ? "bg-gray-400" : "bg-white/80"
                   }`}
                 />
               ))}
@@ -32,7 +32,7 @@ export function Navbar() {
             className="text-[17px] font-bold tracking-tight text-gray-950"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            PropOS
+            Relayne
           </span>
         </Link>
 

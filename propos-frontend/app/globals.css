@@ -4,7 +4,7 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ── PropOS Design System ───────────────────────────────────────────────── */
+/* ── Relayne Design System ───────────────────────────────────────────────── */
 
 :root {
   /* Brand */
@@ -76,7 +76,7 @@
   --shadow-focus: 0 0 0 3px rgb(99 102 241 / 0.25);
 }
 
-/* Shadcn overrides to use PropOS variables */
+/* Shadcn overrides to use Relayne variables */
 :root {
   --radius: 0.625rem;
   --background: var(--surface-page);

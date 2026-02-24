@@ -20,14 +20,14 @@ export function StepCard({
       <span className="text-2xl font-bold text-gray-200" style={{ fontFamily: "var(--font-display)" }}>
         {number}
       </span>
-      <div className="mt-4 mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--brand-50)] text-[var(--brand-600)]">
+      <div className="mt-4 mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
         {icon}
       </div>
       <h3 className="text-base font-semibold text-gray-900 mb-1" style={{ fontFamily: "var(--font-display)" }}>
         {title}
       </h3>
       <p className="text-sm text-gray-500 mb-3 leading-relaxed">{description}</p>
-      <span className="text-xs font-medium text-[var(--brand-600)]">
+      <span className="text-xs font-medium text-gray-700">
         {highlight}
       </span>
     </div>

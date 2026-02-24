@@ -36,7 +36,7 @@ export default function EscalationsPage() {
                 <div className="mb-1 flex items-center gap-1.5">
                   <Bot className="h-3.5 w-3.5 text-[var(--brand-600)]" />
                   <span className="text-xs font-semibold text-[var(--brand-700)]">
-                    PropOS Recommendation
+                    Relayne Recommendation
                   </span>
                 </div>
                 <p className="text-xs text-[var(--brand-700)]">{esc.suggestedAction}</p>

@@ -11,7 +11,7 @@ export function Testimonial({ quote, author, role }: TestimonialProps) {
       <footer className="mt-4">
         <cite className="not-italic">
           <span className="font-semibold text-gray-900">{author}</span>
-          <span className="text-gray-500"> — {role}</span>
+          <span className="text-gray-500">, {role}</span>
         </cite>
       </footer>
     </blockquote>

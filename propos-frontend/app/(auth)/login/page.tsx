@@ -40,7 +40,7 @@ export default function LoginPage() {
                 <div
                   key={i}
                   className={`h-1.5 w-1.5 rounded-[2px] ${
-                    i === 3 ? "bg-[var(--brand-500)]" : "bg-white/80"
+                    i === 3 ? "bg-gray-400" : "bg-white/80"
                   }`}
                 />
               ))}
@@ -50,7 +50,7 @@ export default function LoginPage() {
             className="text-lg font-bold tracking-tight text-gray-950"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            PropOS
+            Relayne
           </span>
         </Link>
       </div>
@@ -103,7 +103,7 @@ export default function LoginPage() {
         </form>
         <p className="mt-6 text-center text-sm text-gray-500">
           Don't have an account?{" "}
-          <Link href="/register" className="font-medium text-[var(--brand-600)] hover:underline">
+          <Link href="/register" className="font-medium text-gray-600 hover:underline">
             Sign up
           </Link>
         </p>

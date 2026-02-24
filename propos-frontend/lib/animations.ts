@@ -1,5 +1,5 @@
 /**
- * PropOS Animation Variants
+ * Relayne Animation Variants
  * Framer Motion variants for consistent animations across the app.
  */
 

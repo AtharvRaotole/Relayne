@@ -29,7 +29,7 @@ export function AgentLogMockup() {
           <div key={i} className="font-mono text-xs">
             <span className="text-gray-400">#{i + 1}</span>
             <div className="ml-4 mt-1">
-              <span className="text-[var(--brand-600)]">→ {step.tool}</span>
+              <span className="text-gray-700">→ {step.tool}</span>
               <span className="text-gray-400 ml-2">
                 {step.input.slice(0, 50)}...
               </span>
@@ -38,7 +38,7 @@ export function AgentLogMockup() {
         ))}
         <div className="mt-2 rounded-lg border border-gray-100 bg-white p-2.5 text-xs text-gray-600 italic">
           "Tenant reported AC failure. Unit 4B has HVAC history. Dispatching
-          QuickCool HVAC — 2.1hr avg response, 4.8★ rating."
+          QuickCool HVAC, 2.1hr avg response, 4.8★ rating."
         </div>
       </div>
     </div>

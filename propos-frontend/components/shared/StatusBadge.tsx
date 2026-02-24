@@ -13,7 +13,7 @@ export type WorkOrderStatus =
 
 const STATUS_STYLES: Record<WorkOrderStatus, string> = {
   NEW: "bg-gray-50 text-gray-600",
-  TRIAGED: "bg-purple-50 text-purple-700",
+  TRIAGED: "bg-blue-50 text-blue-700",
   DISPATCHED: "bg-blue-50 text-blue-700",
   IN_PROGRESS: "bg-amber-50 text-amber-700",
   COMPLETED: "bg-green-50 text-green-700",

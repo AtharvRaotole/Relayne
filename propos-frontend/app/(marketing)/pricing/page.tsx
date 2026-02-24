@@ -83,12 +83,12 @@ function PricingCard({
     <div
       className={`relative flex flex-col rounded-xl border p-6 ${
         plan.highlighted
-          ? "border-[var(--brand-500)] bg-white shadow-[0_0_0_1px_var(--brand-500),0_8px_24px_rgba(99,102,241,0.15)]"
+          ? "border-gray-300 bg-white shadow-[0_0_0_1px_rgb(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.08)]"
           : "border-gray-200 bg-white shadow-[0_0_0_1px_rgb(0,0,0,0.04),0_2px_8px_rgb(0,0,0,0.06)]"
       }`}
     >
       {plan.badge && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[var(--brand-500)] px-3 py-1 text-xs font-semibold text-white">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white">
           {plan.badge}
         </span>
       )}
@@ -113,7 +113,7 @@ function PricingCard({
       <ul className="mt-6 flex-1 space-y-3">
         {plan.features.map((feature) => (
           <li key={feature} className="flex items-start gap-2 text-sm text-gray-700">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-[var(--brand-500)]" />
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-gray-600" />
             {feature}
           </li>
         ))}

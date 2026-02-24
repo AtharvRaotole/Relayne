@@ -38,7 +38,7 @@ export function Footer() {
                     <div
                       key={i}
                       className={`h-1.5 w-1.5 rounded-[2px] ${
-                        i === 3 ? "bg-[var(--brand-400)]" : "bg-white/60"
+                        i === 3 ? "bg-gray-400" : "bg-white/60"
                       }`}
                     />
                   ))}
@@ -48,7 +48,7 @@ export function Footer() {
                 className="text-[17px] font-bold tracking-tight text-white"
                 style={{ fontFamily: "var(--font-display)" }}
               >
-                PropOS
+                Relayne
               </span>
             </div>
             <p className="mt-3 text-sm text-[var(--sidebar-text)] max-w-xs">
@@ -111,7 +111,7 @@ export function Footer() {
 
         <div className="mt-12 border-t border-[var(--sidebar-border)] pt-8">
           <p className="text-sm text-[var(--sidebar-text)]">
-            © 2025 PropOS Inc. · Made for property managers who want to move
+            © 2025 Relayne Inc. · Made for property managers who want to move
             fast
           </p>
         </div>

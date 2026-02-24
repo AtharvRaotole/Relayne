@@ -20,9 +20,9 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "PropOS — AI Property Operations Coordinator",
+  title: "Relayne | AI Property Operations Coordinator",
   description:
-    "PropOS handles vendor dispatch, tenant communication, and compliance work — end-to-end, autonomously.",
+    "Relayne handles vendor dispatch, tenant communication, and compliance work, end-to-end and autonomously.",
 };
 
 export default function RootLayout({

@@ -71,7 +71,7 @@ export default function RegisterPage() {
                 <div
                   key={i}
                   className={`h-1.5 w-1.5 rounded-[2px] ${
-                    i === 3 ? "bg-[var(--brand-500)]" : "bg-white/80"
+                    i === 3 ? "bg-gray-400" : "bg-white/80"
                   }`}
                 />
               ))}
@@ -81,7 +81,7 @@ export default function RegisterPage() {
             className="text-lg font-bold tracking-tight text-gray-950"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            PropOS
+            Relayne
           </span>
         </Link>
       </div>
@@ -91,7 +91,7 @@ export default function RegisterPage() {
             <div
               key={s}
               className={`h-1 flex-1 rounded-full ${
-                step >= s ? "bg-[var(--brand-500)]" : "bg-gray-200"
+                step >= s ? "bg-gray-700" : "bg-gray-200"
               }`}
             />
           ))}
@@ -134,7 +134,7 @@ export default function RegisterPage() {
                 key={plan.id}
                 className={`flex cursor-pointer items-center justify-between rounded-lg border p-4 transition-colors ${
                   step2Form.watch("plan") === plan.id
-                    ? "border-[var(--brand-500)] bg-[var(--brand-50)]"
+                    ? "border-gray-300 bg-gray-50"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
               >
@@ -231,7 +231,7 @@ export default function RegisterPage() {
           Already have an account?{" "}
           <Link
             href="/login"
-            className="font-medium text-[var(--brand-600)] hover:underline"
+            className="font-medium text-gray-600 hover:underline"
           >
             Log in
           </Link>
