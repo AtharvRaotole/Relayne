@@ -13,6 +13,7 @@
     "workers:dev": "tsx watch src/jobs/worker.ts",
     "test": "vitest",
     "test:integration": "vitest --config vitest.integration.config.ts",
+    "test:integration:run": "vitest run --config vitest.integration.config.ts",
     "lint": "eslint src --ext .ts",
     "type-check": "tsc --noEmit"
   },
@@ -40,9 +41,13 @@
   },
   "devDependencies": {
     "@types/node": "^20.14.0",
+    "dotenv": "^17.3.1",
     "prisma": "^5.16.0",
     "tsx": "^4.16.0",
     "typescript": "^5.5.0",
     "vitest": "^2.0.0"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   }
 }
