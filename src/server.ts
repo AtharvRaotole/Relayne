@@ -18,6 +18,9 @@ import { complianceRoutes } from './modules/compliance/compliance.routes'
 import { communicationRoutes } from './modules/communications/communications.routes'
 import { invoiceRoutes } from './modules/invoices/invoices.routes'
 import { analyticsRoutes } from './modules/analytics/analytics.routes'
+import { escalationRoutes } from './modules/escalations/escalations.routes'
+import { agentRoutes } from './modules/agent/agent.routes'
+import { integrationRoutes } from './modules/integrations/integrations.routes'
 import { webhookRoutes } from './webhooks/webhook.routes'
 
 export async function buildApp() {
@@ -59,6 +62,9 @@ export async function buildApp() {
   await app.register(communicationRoutes, { prefix: '/api/v1/communications' })
   await app.register(invoiceRoutes, { prefix: '/api/v1/invoices' })
   await app.register(analyticsRoutes, { prefix: '/api/v1/analytics' })
+  await app.register(escalationRoutes, { prefix: '/api/v1/escalations' })
+  await app.register(agentRoutes, { prefix: '/api/v1/agent' })
+  await app.register(integrationRoutes, { prefix: '/api/v1/integrations' })
   await app.register(webhookRoutes, { prefix: '/api/v1/webhooks' })
 
   return app
