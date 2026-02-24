@@ -201,4 +201,100 @@ export class PropertiesService {
       },
     })
   }
+
+  /** KPIs for property: open WOs, compliance status, avg response time */
+  async getMetrics(organizationId: string, propertyId: string) {
+    const property = await prisma.property.findFirst({
+      where: { id: propertyId, organizationId },
+    })
+    if (!property) return null
+
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
+    const [openWoCount, completedWo, complianceTasks] = await Promise.all([
+      prisma.workOrder.count({
+        where: {
+          propertyId,
+          status: { notIn: ['COMPLETED', 'CANCELLED'] },
+        },
+      }),
+      prisma.workOrder.findMany({
+        where: {
+          propertyId,
+          status: 'COMPLETED',
+          completedAt: { not: null },
+          createdAt: { gte: thirtyDaysAgo },
+        },
+        select: { createdAt: true, completedAt: true },
+      }),
+      prisma.complianceTask.groupBy({
+        by: ['status'],
+        where: { propertyId },
+        _count: { id: true },
+      }),
+    ])
+    const avgResponseHours =
+      completedWo.length > 0
+        ? completedWo.reduce((sum, wo) => {
+            const h =
+              (wo.completedAt!.getTime() - wo.createdAt.getTime()) / (1000 * 60 * 60)
+            return sum + h
+          }, 0) / completedWo.length
+        : null
+    const compMap = Object.fromEntries(complianceTasks.map((c) => [c.status, c._count.id]))
+    return {
+      propertyId,
+      openWorkOrders: openWoCount,
+      avgResponseTimeHours: avgResponseHours != null ? Math.round(avgResponseHours * 10) / 10 : null,
+      compliance: compMap,
+    }
+  }
+
+  /** Capital plan items for property */
+  async getCapitalPlan(organizationId: string, propertyId: string) {
+    const property = await prisma.property.findFirst({
+      where: { id: propertyId, organizationId },
+    })
+    if (!property) return null
+    return prisma.capitalPlanItem.findMany({
+      where: { propertyId },
+      orderBy: { projectedReplacementYear: 'asc' },
+    })
+  }
+
+  /** Work orders for property (filterable) */
+  async getWorkOrders(
+    organizationId: string,
+    propertyId: string,
+    filters?: { status?: string[]; priority?: string[]; from?: Date; to?: Date }
+  ) {
+    const property = await prisma.property.findFirst({
+      where: { id: propertyId, organizationId },
+    })
+    if (!property) return null
+    const where: Record<string, unknown> = { propertyId }
+    if (filters?.status?.length) where.status = { in: filters.status }
+    if (filters?.priority?.length) where.priority = { in: filters.priority }
+    if (filters?.from || filters?.to) {
+      where.createdAt = {}
+      if (filters.from) (where.createdAt as Record<string, Date>).gte = filters.from
+      if (filters.to) (where.createdAt as Record<string, Date>).lte = filters.to
+    }
+    return prisma.workOrder.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      include: { unit: true, vendor: true, tenant: true },
+    })
+  }
+
+  /** Compliance tasks for property */
+  async getCompliance(organizationId: string, propertyId: string) {
+    const property = await prisma.property.findFirst({
+      where: { id: propertyId, organizationId },
+    })
+    if (!property) return null
+    return prisma.complianceTask.findMany({
+      where: { propertyId },
+      orderBy: { dueDate: 'asc' },
+    })
+  }
 }

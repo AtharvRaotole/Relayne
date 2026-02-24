@@ -3,6 +3,7 @@ import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import { Type } from '@sinclair/typebox'
 import { requireAuth } from '../../shared/middleware/auth'
 import { InvoicesService } from './invoices.service'
+import { getPortfolioBenchmarks } from '../analytics/benchmarks.service'
 
 const service = new InvoicesService()
 
@@ -40,6 +41,21 @@ export const invoiceRoutes: FastifyPluginAsync = async (app) => {
         to: qs.to ? new Date(qs.to as string) : undefined,
       })
       return reply.send({ success: true as const, data: result })
+    }
+  )
+
+  // GET /invoices/benchmark — pricing benchmarks by trade
+  server.get(
+    '/benchmark',
+    {
+      schema: {
+        response: { 200: Type.Object({ success: Type.Literal(true), data: Type.Any() }) },
+      },
+    },
+    async (request, reply) => {
+      const orgId = request.organizationId!
+      const data = await getPortfolioBenchmarks(orgId)
+      return reply.send({ success: true as const, data })
     }
   )
 

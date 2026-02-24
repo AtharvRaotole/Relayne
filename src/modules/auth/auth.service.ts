@@ -1,6 +1,6 @@
 import { prisma } from '../../lib/prisma'
 import { hashPassword, verifyPassword } from '../../shared/utils/password'
-import { hashApiKey } from '../../shared/utils/apiKey'
+import { hashApiKey, generateApiKey } from '../../shared/utils/apiKey'
 import { randomBytes } from 'crypto'
 import type { UserRole } from '@prisma/client'
 
@@ -145,6 +145,133 @@ export class AuthService {
     await prisma.session.deleteMany({
       where: { refreshToken },
     })
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) throw new Error('USER_NOT_FOUND')
+    const valid = await verifyPassword(currentPassword, user.passwordHash)
+    if (!valid) throw new Error('INVALID_CURRENT_PASSWORD')
+    const passwordHash = await hashPassword(newPassword)
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash },
+    })
+  }
+
+  async updateProfile(
+    userId: string,
+    input: { firstName?: string; lastName?: string; phone?: string | null; avatarUrl?: string | null }
+  ): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(input.firstName != null && { firstName: input.firstName }),
+        ...(input.lastName != null && { lastName: input.lastName }),
+        ...(input.phone !== undefined && { phone: input.phone }),
+        ...(input.avatarUrl !== undefined && { avatarUrl: input.avatarUrl }),
+      },
+    })
+  }
+
+  async listApiKeys(organizationId: string) {
+    return prisma.apiKey.findMany({
+      where: { organizationId, isActive: true },
+      select: {
+        id: true,
+        name: true,
+        lastUsedAt: true,
+        expiresAt: true,
+        scopes: true,
+        createdAt: true,
+      },
+    })
+  }
+
+  async createApiKey(organizationId: string, name: string, scopes: string[] = ['*']) {
+    const rawKey = generateApiKey()
+    const keyHash = hashApiKey(rawKey)
+    const expiresAt = new Date()
+    expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+    await prisma.apiKey.create({
+      data: {
+        organizationId,
+        name,
+        keyHash,
+        scopes,
+        expiresAt,
+      },
+    })
+    return { rawKey, name, expiresAt } // rawKey only shown once
+  }
+
+  async deleteApiKey(organizationId: string, id: string): Promise<boolean> {
+    const result = await prisma.apiKey.updateMany({
+      where: { id, organizationId },
+      data: { isActive: false },
+    })
+    return result.count > 0
+  }
+
+  async invite(organizationId: string, inviterId: string, email: string, role: UserRole = 'COORDINATOR') {
+    const existingUser = await prisma.user.findUnique({ where: { email: email.toLowerCase() } })
+    if (existingUser) throw new Error('EMAIL_ALREADY_REGISTERED')
+    const token = randomBytes(32).toString('hex')
+    const expiresAt = new Date()
+    expiresAt.setDate(expiresAt.getDate() + 7)
+    const inv = await prisma.invite.create({
+      data: {
+        organizationId,
+        email: email.toLowerCase(),
+        role,
+        token,
+        inviterId,
+        expiresAt,
+      },
+    })
+    return { id: inv.id, email: inv.email, role: inv.role, token, expiresAt }
+  }
+
+  async acceptInvite(token: string, password: string, firstName: string, lastName: string, signJwt: (p: object) => string) {
+    const inv = await prisma.invite.findUnique({
+      where: { token },
+      include: { organization: true },
+    })
+    if (!inv || inv.acceptedAt || inv.expiresAt < new Date()) {
+      throw new Error('INVALID_OR_EXPIRED_INVITE')
+    }
+    const existingUser = await prisma.user.findUnique({ where: { email: inv.email } })
+    if (existingUser) throw new Error('EMAIL_ALREADY_REGISTERED')
+    const passwordHash = await hashPassword(password)
+    const [user] = await prisma.$transaction([
+      prisma.user.create({
+        data: {
+          organizationId: inv.organizationId,
+          email: inv.email,
+          passwordHash,
+          firstName,
+          lastName,
+          role: inv.role,
+        },
+      }),
+      prisma.invite.update({
+        where: { id: inv.id },
+        data: { acceptedAt: new Date() },
+      }),
+    ])
+    const tokens = await this.createSession(user.id, user.organizationId, user.role, signJwt)
+    return {
+      ...tokens,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        organizationId: inv.organization.id,
+        organizationName: inv.organization.name,
+      },
+    }
   }
 
   private async createSession(

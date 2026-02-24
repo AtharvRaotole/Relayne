@@ -248,6 +248,110 @@ export const propertyRoutes: FastifyPluginAsync = async (app) => {
     }
   )
 
+  // GET /properties/:id/metrics
+  server.get(
+    '/:id/metrics',
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        response: { 200: Type.Object({ success: Type.Literal(true), data: Type.Any() }) },
+      },
+    },
+    async (request, reply) => {
+      const orgId = request.organizationId!
+      const { id } = request.params as { id: string }
+      const metrics = await service.getMetrics(orgId, id)
+      if (metrics === null) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Property not found' },
+        } as never)
+      }
+      return reply.send({ success: true as const, data: metrics })
+    }
+  )
+
+  // GET /properties/:id/capital-plan
+  server.get(
+    '/:id/capital-plan',
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        response: { 200: Type.Object({ success: Type.Literal(true), data: Type.Array(Type.Any()) }) },
+      },
+    },
+    async (request, reply) => {
+      const orgId = request.organizationId!
+      const { id } = request.params as { id: string }
+      const items = await service.getCapitalPlan(orgId, id)
+      if (items === null) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Property not found' },
+        } as never)
+      }
+      return reply.send({ success: true as const, data: items })
+    }
+  )
+
+  // GET /properties/:id/work-orders
+  server.get(
+    '/:id/work-orders',
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        querystring: Type.Object({
+          status: Type.Optional(Type.String()),
+          priority: Type.Optional(Type.String()),
+          from: Type.Optional(Type.String()),
+          to: Type.Optional(Type.String()),
+        }),
+        response: { 200: Type.Object({ success: Type.Literal(true), data: Type.Array(Type.Any()) }) },
+      },
+    },
+    async (request, reply) => {
+      const orgId = request.organizationId!
+      const { id } = request.params as { id: string }
+      const qs = request.query as { status?: string; priority?: string; from?: string; to?: string }
+      const filters: { status?: string[]; priority?: string[]; from?: Date; to?: Date } = {}
+      if (qs.status) filters.status = qs.status.split(',')
+      if (qs.priority) filters.priority = qs.priority.split(',')
+      if (qs.from) filters.from = new Date(qs.from)
+      if (qs.to) filters.to = new Date(qs.to)
+      const items = await service.getWorkOrders(orgId, id, filters)
+      if (items === null) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Property not found' },
+        } as never)
+      }
+      return reply.send({ success: true as const, data: items })
+    }
+  )
+
+  // GET /properties/:id/compliance
+  server.get(
+    '/:id/compliance',
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        response: { 200: Type.Object({ success: Type.Literal(true), data: Type.Array(Type.Any()) }) },
+      },
+    },
+    async (request, reply) => {
+      const orgId = request.organizationId!
+      const { id } = request.params as { id: string }
+      const items = await service.getCompliance(orgId, id)
+      if (items === null) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Property not found' },
+        } as never)
+      }
+      return reply.send({ success: true as const, data: items })
+    }
+  )
+
   // PATCH /properties/:id/units/:unitId
   server.patch(
     '/:id/units/:unitId',

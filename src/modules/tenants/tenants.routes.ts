@@ -82,6 +82,47 @@ export const tenantRoutes: FastifyPluginAsync = async (app) => {
     }
   )
 
+  // POST /tenants/bulk-import — must be before /:id
+  server.post(
+    '/bulk-import',
+    {
+      schema: {
+        body: Type.Object({
+          tenants: Type.Array(
+            Type.Object({
+              firstName: Type.String(),
+              lastName: Type.String(),
+              email: Type.Optional(Type.String()),
+              phone: Type.Optional(Type.String()),
+              preferredChannel: Type.Optional(CommChannelEnum),
+              language: Type.Optional(Type.String()),
+              pmsTenantId: Type.Optional(Type.String()),
+              notes: Type.Optional(Type.String()),
+            })
+          ),
+        }),
+        response: { 201: Type.Object({ success: Type.Literal(true), data: Type.Any() }) },
+      },
+    },
+    async (request, reply) => {
+      const orgId = request.organizationId!
+      const { tenants: tenantsInput } = request.body as {
+        tenants: Array<{
+          firstName: string
+          lastName: string
+          email?: string
+          phone?: string
+          preferredChannel?: 'EMAIL' | 'SMS' | 'PORTAL' | 'PHONE'
+          language?: string
+          pmsTenantId?: string
+          notes?: string
+        }>
+      }
+      const result = await service.bulkImport(orgId, tenantsInput)
+      return reply.status(201).send({ success: true as const, data: result })
+    }
+  )
+
   // GET /tenants/:id
   server.get(
     '/:id',
@@ -189,6 +230,34 @@ export const tenantRoutes: FastifyPluginAsync = async (app) => {
         } as never)
       }
       return reply.send({ success: true as const, data: workOrders })
+    }
+  )
+
+  // POST /tenants/:id/send-message
+  server.post(
+    '/:id/send-message',
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        body: Type.Object({
+          subject: Type.Optional(Type.String()),
+          body: Type.String({ minLength: 1 }),
+        }),
+        response: { 201: Type.Object({ success: Type.Literal(true), data: Type.Any() }) },
+      },
+    },
+    async (request, reply) => {
+      const orgId = request.organizationId!
+      const { id } = request.params as { id: string }
+      const body = request.body as { subject?: string; body: string }
+      const message = await service.sendMessage(orgId, id, body)
+      if (message === null) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Tenant not found or has no email/phone' },
+        } as never)
+      }
+      return reply.status(201).send({ success: true as const, data: message })
     }
   )
 

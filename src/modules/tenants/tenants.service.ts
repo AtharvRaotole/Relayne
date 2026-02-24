@@ -1,5 +1,8 @@
 import { prisma } from '../../lib/prisma'
 import type { CommChannel } from '@prisma/client'
+import { CommunicationsService } from '../communications/communications.service'
+
+const commService = new CommunicationsService()
 
 export interface CreateTenantInput {
   organizationId: string
@@ -200,5 +203,67 @@ export class TenantsService {
       orderBy: { createdAt: 'desc' },
       include: { property: true, unit: true, vendor: true },
     })
+  }
+
+  /** Send message to tenant via preferred channel (email or SMS). */
+  async sendMessage(
+    organizationId: string,
+    tenantId: string,
+    input: { subject?: string; body: string }
+  ) {
+    const tenant = await prisma.tenant.findFirst({
+      where: { id: tenantId, organizationId },
+    })
+    if (!tenant) return null
+    const channel = tenant.preferredChannel === 'SMS' ? 'SMS' : 'EMAIL'
+    const to = channel === 'SMS' ? (tenant.phone ?? tenant.email ?? '') : (tenant.email ?? tenant.phone ?? '')
+    if (!to) return null
+    const message = await commService.sendMessage({
+      organizationId,
+      to,
+      channel,
+      subject: input.subject,
+      body: input.body,
+      tenantId,
+    })
+    await prisma.tenant.update({
+      where: { id: tenantId },
+      data: { lastInteractionAt: new Date() },
+    })
+    return message
+  }
+
+  /** Bulk create tenants from array (e.g. CSV import). */
+  async bulkImport(
+    organizationId: string,
+    tenants: Array<{
+      firstName: string
+      lastName: string
+      email?: string
+      phone?: string
+      preferredChannel?: CommChannel
+      language?: string
+      pmsTenantId?: string
+      notes?: string
+    }>
+  ) {
+    const created = await prisma.$transaction(
+      tenants.map((t) =>
+        prisma.tenant.create({
+          data: {
+            organizationId,
+            firstName: t.firstName,
+            lastName: t.lastName,
+            email: t.email,
+            phone: t.phone,
+            preferredChannel: t.preferredChannel ?? 'EMAIL',
+            language: t.language ?? 'en',
+            pmsTenantId: t.pmsTenantId,
+            notes: t.notes,
+          },
+        })
+      )
+    )
+    return { created: created.length, tenants: created }
   }
 }
