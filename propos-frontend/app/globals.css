@@ -1,0 +1,262 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ── PropOS Design System ───────────────────────────────────────────────── */
+
+:root {
+  /* Brand */
+  --brand-50: #f0f4ff;
+  --brand-100: #e0e9ff;
+  --brand-200: #c7d7fe;
+  --brand-300: #a5b8fc;
+  --brand-400: #818cf8;
+  --brand-500: #6366f1;
+  --brand-600: #4f46e5;
+  --brand-700: #4338ca;
+  --brand-800: #3730a3;
+  --brand-900: #312e81;
+
+  /* Neutrals */
+  --gray-50: #f9fafb;
+  --gray-100: #f3f4f6;
+  --gray-200: #e5e7eb;
+  --gray-300: #d1d5db;
+  --gray-400: #9ca3af;
+  --gray-500: #6b7280;
+  --gray-600: #4b5563;
+  --gray-700: #374151;
+  --gray-800: #1f2937;
+  --gray-900: #111827;
+  --gray-950: #030712;
+
+  /* Semantic */
+  --success: #10b981;
+  --success-bg: #ecfdf5;
+  --warning: #f59e0b;
+  --warning-bg: #fffbeb;
+  --danger: #ef4444;
+  --danger-bg: #fef2f2;
+  --info: #3b82f6;
+  --info-bg: #eff6ff;
+
+  /* Priority */
+  --priority-emergency: #dc2626;
+  --priority-high: #f97316;
+  --priority-normal: #3b82f6;
+  --priority-low: #6b7280;
+
+  /* Surface */
+  --surface-page: #f8fafc;
+  --surface-card: #ffffff;
+  --surface-raised: #f1f5f9;
+  --border: #e2e8f0;
+  --border-strong: #cbd5e1;
+
+  /* Sidebar (dark) */
+  --sidebar-bg: #0f1117;
+  --sidebar-surface: #1a1d2e;
+  --sidebar-border: #2d3048;
+  --sidebar-text: #94a3b8;
+  --sidebar-text-active: #f1f5f9;
+  --sidebar-accent: #6366f1;
+
+  /* Typography */
+  --font-display: "Geist", var(--font-geist-sans), sans-serif;
+  --font-body: "DM Sans", var(--font-geist-sans), sans-serif;
+  --font-mono: "Geist Mono", var(--font-geist-mono), monospace;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+  --shadow-card: 0 0 0 1px var(--border), 0 2px 8px rgb(0 0 0 / 0.06);
+  --shadow-focus: 0 0 0 3px rgb(99 102 241 / 0.25);
+}
+
+/* Shadcn overrides to use PropOS variables */
+:root {
+  --radius: 0.625rem;
+  --background: var(--surface-page);
+  --foreground: var(--gray-900);
+  --card: var(--surface-card);
+  --card-foreground: var(--gray-900);
+  --popover: var(--surface-card);
+  --popover-foreground: var(--gray-900);
+  --primary: var(--brand-600);
+  --primary-foreground: #ffffff;
+  --secondary: var(--gray-100);
+  --secondary-foreground: var(--gray-700);
+  --muted: var(--gray-100);
+  --muted-foreground: var(--gray-500);
+  --accent: var(--gray-100);
+  --accent-foreground: var(--gray-900);
+  --destructive: var(--danger);
+  --border: var(--border);
+  --input: var(--border);
+  --ring: var(--brand-500);
+  --chart-1: var(--brand-500);
+  --chart-2: var(--success);
+  --chart-3: var(--warning);
+  --chart-4: var(--brand-400);
+  --chart-5: var(--gray-400);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+  --font-display: var(--font-display);
+  --color-sidebar-ring: var(--sidebar-accent);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-text-active);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-text-active);
+  --color-sidebar-primary: var(--sidebar-accent);
+  --color-sidebar-foreground: var(--sidebar-text);
+  --color-sidebar: var(--sidebar-bg);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: calc(var(--radius) + 16px);
+}
+
+
+/* Animations */
+@keyframes slide-in-right {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* Typography utilities */
+.text-h1 {
+  font-size: 2.5rem;
+  line-height: 1.15;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-family: var(--font-display);
+}
+
+.text-h2 {
+  font-size: 1.875rem;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-family: var(--font-display);
+}
+
+.text-h3 {
+  font-size: 1.375rem;
+  line-height: 1.3;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-family: var(--font-display);
+}
+
+.text-h4 {
+  font-size: 1.125rem;
+  line-height: 1.4;
+  font-weight: 600;
+  font-family: var(--font-display);
+}
+
+.text-body-lg {
+  font-size: 1.0625rem;
+  line-height: 1.65;
+  font-family: var(--font-body);
+}
+
+.text-body {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  font-family: var(--font-body);
+}
+
+.text-body-sm {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  font-family: var(--font-body);
+}
+
+.text-caption {
+  font-size: 0.75rem;
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  font-family: var(--font-body);
+}
+
+.text-label {
+  font-size: 0.6875rem;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-weight: 600;
+  font-family: var(--font-body);
+}
+
+/* Card pattern */
+.shadow-card {
+  box-shadow: var(--shadow-card);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body);
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+  }
+}
