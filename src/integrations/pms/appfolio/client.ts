@@ -79,6 +79,14 @@ export class AppFolioClient {
     return res.json() as Promise<T>
   }
 
+  async getProperty(id: string): Promise<AppFolioProperty | null> {
+    try {
+      return await this.request<AppFolioProperty>('GET', `/properties/${id}`)
+    } catch {
+      return null
+    }
+  }
+
   async getProperties(): Promise<AppFolioProperty[]> {
     const data = await this.request<{ results?: AppFolioProperty[] }>(
       'GET',
@@ -107,6 +115,14 @@ export class AppFolioClient {
       `/tenants${qs}`
     )
     return data.results ?? []
+  }
+
+  async getTenant(id: string): Promise<AppFolioTenant | null> {
+    try {
+      return await this.request<AppFolioTenant>('GET', `/tenants/${id}`)
+    } catch {
+      return null
+    }
   }
 
   async getTenantByEmail(email: string): Promise<AppFolioTenant | null> {
@@ -142,6 +158,14 @@ export class AppFolioClient {
     data: { status?: string; assigned_to?: string; note?: string }
   ): Promise<AppFolioMaintenanceRequest> {
     return this.request('PATCH', `/maintenance_requests/${id}`, data)
+  }
+
+  async getLease(id: string): Promise<AppFolioLease | null> {
+    try {
+      return await this.request<AppFolioLease>('GET', `/leases/${id}`)
+    } catch {
+      return null
+    }
   }
 
   async getLeases(params?: { status?: string }): Promise<AppFolioLease[]> {

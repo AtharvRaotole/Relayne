@@ -10,6 +10,18 @@ export interface YardiConfig {
 export class YardiClient {
   constructor(_config: YardiConfig) {}
 
+  async getProperty(_id: string): Promise<unknown> {
+    throw new Error('Yardi integration not yet implemented')
+  }
+
+  async getTenant(_id: string): Promise<unknown> {
+    throw new Error('Yardi integration not yet implemented')
+  }
+
+  async getLease(_id: string): Promise<unknown> {
+    throw new Error('Yardi integration not yet implemented')
+  }
+
   async syncAll(_organizationId: string): Promise<{
     properties: unknown[]
     tenants: unknown[]
