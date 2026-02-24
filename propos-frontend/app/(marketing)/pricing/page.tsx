@@ -83,49 +83,49 @@ function PricingCard({
     <div
       className={`relative flex flex-col rounded-xl border p-6 ${
         plan.highlighted
-          ? "border-gray-300 bg-white shadow-[0_0_0_1px_rgb(0,0,0,0.08),0_8px_24px_rgba(0,0,0,0.08)]"
-          : "border-gray-200 bg-white shadow-[0_0_0_1px_rgb(0,0,0,0.04),0_2px_8px_rgb(0,0,0,0.06)]"
+          ? "border-cyan-500/30 bg-cyan-500/[0.04] ring-1 ring-cyan-500/10"
+          : "border-zinc-800 bg-zinc-900/60"
       }`}
     >
       {plan.badge && (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white">
+        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-cyan-500 px-3 py-1 text-xs font-semibold text-white shadow-[0_0_16px_rgba(34,211,238,0.3)]">
           {plan.badge}
         </span>
       )}
       <h3
-        className="text-xl font-semibold text-gray-950"
+        className="text-xl font-semibold text-white"
         style={{ fontFamily: "var(--font-display)" }}
       >
         {plan.name}
       </h3>
       <div className="mt-4 flex items-baseline gap-1">
         <span
-          className="text-4xl font-bold text-gray-950"
+          className="text-4xl font-bold text-white"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {displayPrice}
         </span>
         {plan.unit && (
-          <span className="text-sm text-gray-500"> {plan.unit}</span>
+          <span className="text-sm text-zinc-500"> {plan.unit}</span>
         )}
       </div>
-      <p className="mt-2 text-sm text-gray-500">{plan.description}</p>
+      <p className="mt-2 text-sm text-zinc-400">{plan.description}</p>
       <ul className="mt-6 flex-1 space-y-3">
         {plan.features.map((feature) => (
-          <li key={feature} className="flex items-start gap-2 text-sm text-gray-700">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-gray-600" />
+          <li key={feature} className="flex items-start gap-2 text-sm text-zinc-300">
+            <Check className="mt-0.5 h-4 w-4 shrink-0 text-cyan-400" />
             {feature}
           </li>
         ))}
       </ul>
       <Button
-        className="mt-8 w-full"
-        variant={plan.ctaVariant}
+        className={`mt-8 w-full ${plan.highlighted ? "bg-cyan-500 text-white hover:bg-cyan-400 shadow-[0_0_20px_rgba(34,211,238,0.15)]" : "border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white hover:border-zinc-600"}`}
+        variant="outline"
         size="lg"
         asChild
       >
         <Link href={plan.cta === "Talk to Sales" ? "/contact" : "/register"}>
-          {plan.cta}
+          {plan.cta === "Start Free Trial" ? "Launch App" : plan.cta}
         </Link>
       </Button>
     </div>
@@ -141,34 +141,33 @@ export default function PricingPage() {
         <div className="text-center">
           <SectionLabel>Pricing</SectionLabel>
           <h1
-            className="mt-2 text-4xl font-bold text-gray-950"
+            className="mt-2 text-4xl font-bold text-white"
             style={{ fontFamily: "var(--font-display)" }}
           >
             Simple, transparent pricing
           </h1>
-          <p className="mx-auto mt-4 max-w-xl text-gray-500">
+          <p className="mx-auto mt-4 max-w-xl text-zinc-400">
             Start free for 30 days. No credit card required. Scale as you grow.
           </p>
 
-          {/* Toggle */}
-          <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-gray-200 bg-gray-50 p-1">
+          <div className="mt-8 inline-flex items-center gap-3 rounded-full border border-zinc-800 bg-zinc-900/60 p-1">
             <button
               onClick={() => setAnnual(false)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                !annual ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                !annual ? "bg-cyan-500 text-white shadow-[0_0_12px_rgba(34,211,238,0.2)]" : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setAnnual(true)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                annual ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                annual ? "bg-cyan-500 text-white shadow-[0_0_12px_rgba(34,211,238,0.2)]" : "text-zinc-500 hover:text-zinc-300"
               }`}
             >
               Annual
             </button>
-            <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+            <span className="rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 px-2.5 py-0.5 text-xs font-semibold">
               Save 20%
             </span>
           </div>

@@ -17,7 +17,7 @@ import {
 export function DashboardPreviewMockup() {
   return (
     <motion.div
-      className="bg-[var(--surface-page)] min-h-[400px]"
+      className="bg-[#0c0c10] min-h-[400px]"
       animate={{ y: [0, -4, 0] }}
       transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
     >
@@ -67,10 +67,10 @@ export function DashboardPreviewMockup() {
         {/* Main content area */}
         <div className="flex-1 p-4 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900">
+            <h2 className="text-sm font-semibold text-zinc-100">
               Overview. Portfolio trending up
             </h2>
-            <span className="text-xs text-gray-400">Last 7 days</span>
+            <span className="text-xs text-zinc-500">Last 7 days</span>
           </div>
 
           {/* KPI cards row */}
@@ -83,32 +83,32 @@ export function DashboardPreviewMockup() {
             ].map((stat, i) => (
               <div
                 key={i}
-                className="rounded-lg border border-gray-100 bg-white p-3 shadow-[0_0_0_1px_rgb(0,0,0,0.04),0_2px_8px_rgb(0,0,0,0.06)]"
+                className="rounded-lg border border-zinc-800 bg-zinc-900/60 p-3"
               >
-                <p className="text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                <p className="text-[10px] font-medium text-zinc-500 uppercase tracking-wider">
                   {stat.label}
                 </p>
-                <p className="text-lg font-bold text-gray-900">{stat.value}</p>
-                <p className="text-[10px] text-green-600">↑ {stat.delta}</p>
+                <p className="text-lg font-bold text-zinc-100">{stat.value}</p>
+                <p className="text-[10px] text-emerald-400">↑ {stat.delta}</p>
               </div>
             ))}
           </div>
 
           {/* Chart area */}
           <div
-            className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_0_0_1px_rgb(0,0,0,0.04),0_2px_8px_rgb(0,0,0,0.06)]"
+            className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"
             style={{ minHeight: 120 }}
           >
             <div className="flex items-center gap-4 mb-3">
-              <span className="text-xs font-medium text-gray-700">
+              <span className="text-xs font-medium text-zinc-300">
                 Work Order Activity
               </span>
-              <span className="text-[10px] flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-gray-500" />
+              <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-zinc-600" />
                 Created
               </span>
-              <span className="text-[10px] flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-green-500" />
+              <span className="text-[10px] text-zinc-500 flex items-center gap-1">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 Resolved
               </span>
             </div>
@@ -116,7 +116,7 @@ export function DashboardPreviewMockup() {
               {[40, 55, 45, 70, 60, 50, 65].map((h, i) => (
                 <div
                   key={i}
-                  className="flex-1 rounded-t bg-gray-300"
+                  className="flex-1 rounded-t bg-zinc-700"
                   style={{ height: `${h}%` }}
                 />
               ))}
@@ -124,17 +124,17 @@ export function DashboardPreviewMockup() {
           </div>
 
           {/* Table preview */}
-          <div className="rounded-lg border border-gray-100 bg-white overflow-hidden">
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/60 overflow-hidden">
             <table className="w-full text-xs">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50/50">
-                  <th className="px-3 py-2 text-left font-medium text-gray-600">
+                <tr className="border-b border-zinc-800 bg-zinc-900/40">
+                  <th className="px-3 py-2 text-left font-medium text-zinc-500">
                     Work Order
                   </th>
-                  <th className="px-3 py-2 text-left font-medium text-gray-600">
+                  <th className="px-3 py-2 text-left font-medium text-zinc-500">
                     Status
                   </th>
-                  <th className="px-3 py-2 text-left font-medium text-gray-600">
+                  <th className="px-3 py-2 text-left font-medium text-zinc-500">
                     Handler
                   </th>
                 </tr>
@@ -145,18 +145,18 @@ export function DashboardPreviewMockup() {
                   { title: "Leak inspection - Unit 2A", status: "Dispatched", ai: true },
                   { title: "Appliance replacement", status: "Completed", ai: false },
                 ].map((row, i) => (
-                  <tr key={i} className="border-b border-gray-50">
-                    <td className="px-3 py-2 font-medium text-gray-900">
+                  <tr key={i} className="border-b border-zinc-800/50">
+                    <td className="px-3 py-2 font-medium text-zinc-200">
                       {row.title}
                     </td>
                     <td className="px-3 py-2">
                       <span
-                        className={`rounded px-1.5 py-0.5 text-[10px] ${
+                        className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
                           row.status === "Completed"
-                            ? "bg-green-50 text-green-700"
+                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
                             : row.status === "In Progress"
-                              ? "bg-amber-50 text-amber-700"
-                              : "bg-blue-50 text-blue-700"
+                              ? "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                              : "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
                         }`}
                       >
                         {row.status}
@@ -164,11 +164,11 @@ export function DashboardPreviewMockup() {
                     </td>
                     <td className="px-3 py-2">
                       {row.ai ? (
-                        <span className="flex items-center gap-1 text-gray-700">
+                        <span className="flex items-center gap-1 text-zinc-400">
                           <Bot className="h-2.5 w-2.5" /> AI
                         </span>
                       ) : (
-                        <span className="text-gray-500">Manual</span>
+                        <span className="text-zinc-500">Manual</span>
                       )}
                     </td>
                   </tr>
@@ -199,7 +199,7 @@ function NavItem({
           : "text-[var(--sidebar-text)] hover:bg-[var(--sidebar-surface)]/50 hover:text-[var(--sidebar-text-active)]"
       }`}
     >
-      <span className={active ? "text-gray-400" : ""}>{icon}</span>
+      <span className={active ? "text-zinc-400" : ""}>{icon}</span>
       {children}
     </div>
   );

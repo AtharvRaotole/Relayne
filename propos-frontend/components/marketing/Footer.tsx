@@ -23,22 +23,18 @@ const footerLinks = {
 
 export function Footer() {
   return (
-    <footer
-      className="border-t border-[var(--sidebar-border)]"
-      style={{ backgroundColor: "var(--sidebar-bg)" }}
-    >
+    <footer className="border-t border-white/[0.04]">
       <div className="mx-auto max-w-7xl px-6 py-16">
         <div className="grid grid-cols-2 gap-12 md:grid-cols-4">
-          {/* Col 1: Logo + tagline */}
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-400/5 border border-cyan-500/20">
                 <div className="grid grid-cols-2 gap-[3px]">
                   {[0, 1, 2, 3].map((i) => (
                     <div
                       key={i}
                       className={`h-1.5 w-1.5 rounded-[2px] ${
-                        i === 3 ? "bg-gray-400" : "bg-white/60"
+                        i === 3 ? "bg-cyan-400" : "bg-white/50"
                       }`}
                     />
                   ))}
@@ -51,21 +47,20 @@ export function Footer() {
                 Relayne
               </span>
             </div>
-            <p className="mt-3 text-sm text-[var(--sidebar-text)] max-w-xs">
+            <p className="mt-4 text-sm text-zinc-500 max-w-xs leading-relaxed">
               The AI coordinator for property operations. Your team reviews
               exceptions, not tickets.
             </p>
           </div>
 
-          {/* Col 2: Product */}
           <div>
-            <h4 className="text-sm font-semibold text-white">Product</h4>
+            <h4 className="text-sm font-semibold text-zinc-300">Product</h4>
             <ul className="mt-4 space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-[var(--sidebar-text)] hover:text-white transition-colors"
+                    className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -74,15 +69,14 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Col 3: Company */}
           <div>
-            <h4 className="text-sm font-semibold text-white">Company</h4>
+            <h4 className="text-sm font-semibold text-zinc-300">Company</h4>
             <ul className="mt-4 space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-[var(--sidebar-text)] hover:text-white transition-colors"
+                    className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -91,15 +85,14 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Col 4: Legal */}
           <div>
-            <h4 className="text-sm font-semibold text-white">Legal</h4>
+            <h4 className="text-sm font-semibold text-zinc-300">Legal</h4>
             <ul className="mt-4 space-y-3">
               {footerLinks.legal.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-sm text-[var(--sidebar-text)] hover:text-white transition-colors"
+                    className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors duration-200"
                   >
                     {link.label}
                   </Link>
@@ -109,8 +102,8 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 border-t border-[var(--sidebar-border)] pt-8">
-          <p className="text-sm text-[var(--sidebar-text)]">
+        <div className="mt-12 border-t border-white/[0.04] pt-8">
+          <p className="text-sm text-zinc-600">
             © 2025 Relayne Inc. · Made for property managers who want to move
             fast
           </p>

@@ -8,10 +8,11 @@ interface MetricPillProps {
 
 export function MetricPill({ icon, label, sub }: MetricPillProps) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-600 shadow-sm">
-      <span className="text-gray-400">{icon}</span>
+    <div className="inline-flex items-center gap-2 rounded-full bg-zinc-900/80 border border-zinc-700/50 px-3.5 py-2 text-xs font-medium text-zinc-400 backdrop-blur-sm">
+      <span className="text-cyan-400">{icon}</span>
       <span>
-        <strong className="text-gray-800">{label}</strong> {sub}
+        <strong className="text-zinc-200">{label}</strong>{" "}
+        <span className="text-zinc-500">{sub}</span>
       </span>
     </div>
   );
