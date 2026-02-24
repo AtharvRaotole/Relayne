@@ -9,6 +9,15 @@ import { prisma } from './lib/prisma'
 import { redis } from './lib/redis'
 import { env } from './config/env'
 import { authRoutes } from './modules/auth/auth.routes'
+import { organizationRoutes } from './modules/organizations/organizations.routes'
+import { propertyRoutes } from './modules/properties/properties.routes'
+import { tenantRoutes } from './modules/tenants/tenants.routes'
+import { vendorRoutes } from './modules/vendors/vendors.routes'
+import { workOrderRoutes } from './modules/work-orders/work-orders.routes'
+import { complianceRoutes } from './modules/compliance/compliance.routes'
+import { communicationRoutes } from './modules/communications/communications.routes'
+import { invoiceRoutes } from './modules/invoices/invoices.routes'
+import { webhookRoutes } from './webhooks/webhook.routes'
 
 export async function buildApp() {
   const app = Fastify({
@@ -40,6 +49,15 @@ export async function buildApp() {
 
   // API routes
   await app.register(authRoutes, { prefix: '/api/v1/auth' })
+  await app.register(organizationRoutes, { prefix: '/api/v1/organizations' })
+  await app.register(propertyRoutes, { prefix: '/api/v1/properties' })
+  await app.register(tenantRoutes, { prefix: '/api/v1/tenants' })
+  await app.register(vendorRoutes, { prefix: '/api/v1/vendors' })
+  await app.register(workOrderRoutes, { prefix: '/api/v1/work-orders' })
+  await app.register(complianceRoutes, { prefix: '/api/v1/compliance' })
+  await app.register(communicationRoutes, { prefix: '/api/v1/communications' })
+  await app.register(invoiceRoutes, { prefix: '/api/v1/invoices' })
+  await app.register(webhookRoutes, { prefix: '/api/v1/webhooks' })
 
   return app
 }
