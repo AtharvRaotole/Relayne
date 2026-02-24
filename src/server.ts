@@ -17,6 +17,7 @@ import { workOrderRoutes } from './modules/work-orders/work-orders.routes'
 import { complianceRoutes } from './modules/compliance/compliance.routes'
 import { communicationRoutes } from './modules/communications/communications.routes'
 import { invoiceRoutes } from './modules/invoices/invoices.routes'
+import { analyticsRoutes } from './modules/analytics/analytics.routes'
 import { webhookRoutes } from './webhooks/webhook.routes'
 
 export async function buildApp() {
@@ -57,6 +58,7 @@ export async function buildApp() {
   await app.register(complianceRoutes, { prefix: '/api/v1/compliance' })
   await app.register(communicationRoutes, { prefix: '/api/v1/communications' })
   await app.register(invoiceRoutes, { prefix: '/api/v1/invoices' })
+  await app.register(analyticsRoutes, { prefix: '/api/v1/analytics' })
   await app.register(webhookRoutes, { prefix: '/api/v1/webhooks' })
 
   return app

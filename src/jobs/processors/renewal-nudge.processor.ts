@@ -2,10 +2,11 @@ import { Job } from 'bullmq'
 import { prisma } from '../../lib/prisma'
 import { addDays } from 'date-fns'
 import { logger } from '../../lib/logger'
+import { AgentRunner } from '../../agent/core/AgentRunner'
 
 /**
- * Renewal nudge processor — finds leases expiring soon, triggers renewal workflow.
- * Phase 4: Status updates. Phase 5: AgentRunner for lease renewal workflow.
+ * Renewal nudge processor — finds leases expiring soon, triggers AgentRunner
+ * lease renewal workflow for each tenant.
  */
 export async function processRenewalNudges(job: Job) {
   const expiringLeases = await prisma.lease.findMany({
@@ -23,16 +24,40 @@ export async function processRenewalNudges(job: Job) {
     },
   })
 
+  const orgIds = new Set<string>()
+
   for (const lease of expiringLeases) {
-    // TODO Phase 5: Run AgentRunner for lease_renewal workflow
+    if (!lease.tenant) continue
+    const orgId = lease.tenant.organizationId
+    orgIds.add(orgId)
+
     await prisma.lease.update({
       where: { id: lease.id },
       data: { renewalSentAt: new Date(), status: 'RENEWAL_PENDING' },
     })
+
+    const message = await prisma.message.findFirst({
+      where: { tenantId: lease.tenantId },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    const agentRunner = new AgentRunner(orgId)
+    await agentRunner.run({
+      organizationId: orgId,
+      triggerType: 'scheduled',
+      triggerId: lease.id,
+      workflowHint: 'lease_renewal',
+      context: {
+        inboundMessage: message,
+        tenant: lease.tenant,
+        activeLease: lease,
+        leaseEndDate: lease.endDate.toISOString(),
+      },
+    })
   }
 
   logger.info(
-    { count: expiringLeases.length },
+    { count: expiringLeases.length, orgCount: orgIds.size },
     'Renewal nudge scan completed'
   )
 }
