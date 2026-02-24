@@ -1,0 +1,92 @@
+services:
+  # ── Application ─────────────────────────────────────
+  api:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://propos:password@postgres:5432/propos_dev
+      REDIS_URL: redis://redis:6379
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: npm run dev
+
+  # ── Worker (BullMQ) ─────────────────────────────────
+  worker:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://propos:password@postgres:5432/propos_dev
+      REDIS_URL: redis://redis:6379
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+      - redis
+    command: npm run workers:dev
+
+  # ── PostgreSQL ──────────────────────────────────────
+  postgres:
+    image: pgvector/pgvector:pg15
+    environment:
+      POSTGRES_USER: propos
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: propos_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U propos"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ── Redis ────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ── MinIO (S3-compatible local storage) ─────────────
+  minio:
+    image: minio/minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+
+  # ── BullMQ Dashboard ─────────────────────────────────
+  bull-board:
+    image: deadly0/bull-board
+    ports:
+      - "3002:3000"
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

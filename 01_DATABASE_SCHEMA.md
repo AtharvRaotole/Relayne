@@ -1,0 +1,861 @@
+# Database Schema
+## Prisma Schema — Full Specification
+
+> File location: `prisma/schema.prisma`
+> Database: PostgreSQL 15 with pgvector extension
+
+---
+
+## Setup Commands
+
+```bash
+# Install deps
+npm install @prisma/client prisma
+
+# Initialize
+npx prisma init
+
+# After editing schema.prisma:
+npx prisma migrate dev --name init
+npx prisma generate
+
+# Enable pgvector extension (run once in DB):
+# CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+---
+
+## Full `prisma/schema.prisma`
+
+```prisma
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [pgvector(map: "vector")]
+}
+
+// ─────────────────────────────────────────────
+// MULTI-TENANCY: Organizations
+// ─────────────────────────────────────────────
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  plan        Plan     @default(STARTER)
+  unitCount   Int      @default(0)
+  settings    Json     @default("{}")  // AI behavior, escalation rules, branding
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users        User[]
+  properties   Property[]
+  vendors      Vendor[]
+  workOrders   WorkOrder[]
+  tenants      Tenant[]
+  invoices     Invoice[]
+  complianceTasks ComplianceTask[]
+  apiKeys      ApiKey[]
+  pmsConnections PmsConnection[]
+  agentLogs    AgentLog[]
+  escalations  Escalation[]
+  jurisdictions Jurisdiction[]
+
+  @@map("organizations")
+}
+
+enum Plan {
+  STARTER
+  GROWTH
+  ENTERPRISE
+}
+
+// ─────────────────────────────────────────────
+// AUTH
+// ─────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String   @unique
+  passwordHash   String
+  firstName      String
+  lastName       String
+  role           UserRole @default(COORDINATOR)
+  phone          String?
+  avatarUrl      String?
+  lastLoginAt    DateTime?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sessions       Session[]
+  escalations    Escalation[] @relation("EscalationAssignee")
+  agentLogs      AgentLog[]   @relation("AgentLogReviewer")
+
+  @@map("users")
+}
+
+enum UserRole {
+  OWNER         // Full access, billing
+  ADMIN         // Full operational access
+  COORDINATOR   // Can review escalations, manage properties
+  READ_ONLY     // Reporting only
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  refreshToken String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model ApiKey {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  keyHash        String   @unique   // Store SHA-256 hash only
+  lastUsedAt     DateTime?
+  expiresAt      DateTime?
+  scopes         String[]           // e.g. ["webhooks:write", "workorders:read"]
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+}
+
+// ─────────────────────────────────────────────
+// PROPERTIES & UNITS
+// ─────────────────────────────────────────────
+
+model Property {
+  id             String        @id @default(cuid())
+  organizationId String
+  pmsPropertyId  String?       // External ID in AppFolio/Yardi/Buildium
+  name           String
+  propertyType   PropertyType  @default(MULTIFAMILY)
+  address        Json          // { street, city, state, zip, country }
+  jurisdictionId String?       // Links to Jurisdiction for compliance rules
+  unitCount      Int           @default(0)
+  yearBuilt      Int?
+  metadata       Json          @default("{}")  // custom fields from PMS
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  jurisdiction   Jurisdiction? @relation(fields: [jurisdictionId], references: [id])
+  units          Unit[]
+  workOrders     WorkOrder[]
+  complianceTasks ComplianceTask[]
+  capitalPlans   CapitalPlanItem[]
+
+  @@unique([organizationId, pmsPropertyId])
+  @@map("properties")
+}
+
+enum PropertyType {
+  MULTIFAMILY
+  SINGLE_FAMILY
+  MIXED_USE
+  HOA
+  STUDENT_HOUSING
+  SENIOR_HOUSING
+}
+
+model Unit {
+  id             String   @id @default(cuid())
+  propertyId     String
+  pmsUnitId      String?
+  unitNumber     String
+  bedrooms       Float    @default(1)
+  bathrooms      Float    @default(1)
+  squareFeet     Int?
+  floor          Int?
+  isOccupied     Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  property       Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  leases         Lease[]
+  workOrders     WorkOrder[]
+
+  @@unique([propertyId, unitNumber])
+  @@map("units")
+}
+
+// ─────────────────────────────────────────────
+// TENANTS
+// ─────────────────────────────────────────────
+
+model Tenant {
+  id               String   @id @default(cuid())
+  organizationId   String
+  pmsTenantId      String?  // External PMS ID
+  firstName        String
+  lastName         String
+  email            String?
+  phone            String?
+  preferredChannel CommChannel @default(EMAIL)
+  language         String   @default("en")
+  
+  // AI relationship memory
+  churnRiskScore   Float    @default(0)    // 0–1, computed by agent
+  satisfactionScore Float   @default(0.5)  // 0–1, from interactions
+  lastInteractionAt DateTime?
+  
+  notes            String?  // Internal notes from coordinators
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  leases           Lease[]
+  messages         Message[]
+  workOrders       WorkOrder[]
+  tenantEmbeddings TenantEmbedding[]
+
+  @@unique([organizationId, pmsTenantId])
+  @@map("tenants")
+}
+
+enum CommChannel {
+  EMAIL
+  SMS
+  PORTAL
+  PHONE
+}
+
+model Lease {
+  id             String      @id @default(cuid())
+  unitId         String
+  tenantId       String
+  pmsLeaseId     String?
+  startDate      DateTime
+  endDate        DateTime
+  rentAmount     Float
+  securityDeposit Float?
+  status         LeaseStatus @default(ACTIVE)
+  terms          Json        @default("{}")  // Non-standard terms flagged by AI
+  renewalSentAt  DateTime?   // When renewal offer was sent
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  unit           Unit        @relation(fields: [unitId], references: [id])
+  tenant         Tenant      @relation(fields: [tenantId], references: [id])
+
+  @@map("leases")
+}
+
+enum LeaseStatus {
+  ACTIVE
+  RENEWAL_PENDING
+  EXPIRED
+  TERMINATED
+  NOTICE_GIVEN
+}
+
+// Vector embedding for tenant interaction history (semantic search)
+model TenantEmbedding {
+  id        String                        @id @default(cuid())
+  tenantId  String
+  content   String                        // The text that was embedded
+  embedding Unsupported("vector(1536)")?  // pgvector
+  createdAt DateTime                      @default(now())
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_embeddings")
+}
+
+// ─────────────────────────────────────────────
+// COMMUNICATIONS (Unified Thread)
+// ─────────────────────────────────────────────
+
+model Thread {
+  id             String        @id @default(cuid())
+  organizationId String
+  tenantId       String?
+  vendorId       String?
+  workOrderId    String?
+  subject        String?
+  status         ThreadStatus  @default(OPEN)
+  lastMessageAt  DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  messages       Message[]
+
+  @@map("threads")
+}
+
+enum ThreadStatus {
+  OPEN
+  WAITING_RESPONSE
+  RESOLVED
+  ESCALATED
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  threadId       String
+  tenantId       String?       // If from/to tenant
+  vendorId       String?       // If from/to vendor
+  direction      Direction     // INBOUND or OUTBOUND
+  channel        CommChannel
+  fromAddress    String?       // Email address or phone number
+  toAddress      String?
+  subject        String?       // For email
+  body           String
+  htmlBody       String?       // For rich email
+  attachments    Json          @default("[]")  // [{name, url, mimeType}]
+  externalId     String?       // SendGrid/Twilio message ID
+  
+  // AI processing
+  aiProcessed    Boolean       @default(false)
+  aiSummary      String?       // Short AI-generated summary
+  aiIntent       String?       // e.g. "maintenance_request", "complaint", "payment_inquiry"
+  aiSentiment    Float?        // -1 to 1
+  
+  readAt         DateTime?
+  createdAt      DateTime      @default(now())
+
+  thread         Thread        @relation(fields: [threadId], references: [id])
+  tenant         Tenant?       @relation(fields: [tenantId], references: [id])
+
+  @@map("messages")
+}
+
+enum Direction {
+  INBOUND
+  OUTBOUND
+}
+
+// ─────────────────────────────────────────────
+// VENDORS
+// ─────────────────────────────────────────────
+
+model Vendor {
+  id             String       @id @default(cuid())
+  organizationId String
+  companyName    String
+  contactName    String?
+  email          String?
+  phone          String?
+  preferredChannel CommChannel @default(EMAIL)
+  
+  trades         String[]     // e.g. ["plumbing", "hvac", "electrical"]
+  serviceZips    String[]     // ZIP codes they service
+  
+  // Performance metrics (auto-computed)
+  avgResponseTimeHours Float  @default(24)
+  avgCompletionDays    Float  @default(3)
+  avgRating            Float  @default(0)
+  completionRate       Float  @default(1)  // % of jobs completed
+  totalJobsCompleted   Int    @default(0)
+  
+  // Pricing
+  laborRates     Json?        // { hourly: 85, callout: 150 } — used for anomaly detection
+  preferredTier  VendorTier   @default(STANDARD)
+  
+  // Compliance
+  insuranceExpiry    DateTime?
+  licenseExpiry      DateTime?
+  w9OnFile           Boolean  @default(false)
+  
+  isActive       Boolean      @default(true)
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  workOrders     WorkOrder[]
+  bids           VendorBid[]
+  ratings        VendorRating[]
+
+  @@map("vendors")
+}
+
+enum VendorTier {
+  PREFERRED    // First to be called, pre-approved up to higher PO limit
+  STANDARD
+  BACKUP       // Only used if others unavailable
+  SUSPENDED
+}
+
+model VendorBid {
+  id          String    @id @default(cuid())
+  workOrderId String
+  vendorId    String
+  amount      Float
+  notes       String?
+  validUntil  DateTime?
+  status      BidStatus @default(PENDING)
+  createdAt   DateTime  @default(now())
+
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+  vendor      Vendor    @relation(fields: [vendorId], references: [id])
+
+  @@map("vendor_bids")
+}
+
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+model VendorRating {
+  id          String   @id @default(cuid())
+  vendorId    String
+  workOrderId String   @unique
+  score       Int      // 1-5
+  notes       String?
+  ratedById   String?  // User or null if auto-rated by AI
+  createdAt   DateTime @default(now())
+
+  vendor      Vendor   @relation(fields: [vendorId], references: [id])
+
+  @@map("vendor_ratings")
+}
+
+// ─────────────────────────────────────────────
+// WORK ORDERS (Core workflow entity)
+// ─────────────────────────────────────────────
+
+model WorkOrder {
+  id               String          @id @default(cuid())
+  organizationId   String
+  propertyId       String
+  unitId           String?
+  tenantId         String?
+  vendorId         String?         // Assigned vendor
+  pmsWorkOrderId   String?         // External PMS ID
+  
+  title            String
+  description      String
+  category         WorkOrderCategory
+  priority         Priority        @default(NORMAL)
+  status           WorkOrderStatus @default(NEW)
+  
+  // Source
+  sourceChannel    CommChannel?    // How it came in
+  sourceMessageId  String?         // Original message that created it
+  
+  // Scheduling
+  scheduledAt      DateTime?
+  estimatedHours   Float?
+  accessInstructions String?
+  
+  // Completion
+  completedAt      DateTime?
+  resolutionNotes  String?
+  photos           Json            @default("[]")  // [{url, caption, uploadedAt}]
+  
+  // Financial
+  estimatedCost    Float?
+  actualCost       Float?
+  invoiceId        String?         // Linked invoice after completion
+  poNumber         String?         // Auto-generated PO
+  poApprovedAt     DateTime?
+  poApprovalUserId String?
+  
+  // AI metadata
+  aiHandled        Boolean         @default(false)  // Was this 100% AI-handled?
+  aiConfidence     Float?          // 0–1 confidence in the routing decision
+  escalationId     String?
+  
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  
+  organization     Organization    @relation(fields: [organizationId], references: [id])
+  property         Property        @relation(fields: [propertyId], references: [id])
+  unit             Unit?           @relation(fields: [unitId], references: [id])
+  tenant           Tenant?         @relation(fields: [tenantId], references: [id])
+  vendor           Vendor?         @relation(fields: [vendorId], references: [id])
+  bids             VendorBid[]
+  timeline         WorkOrderEvent[]
+  invoice          Invoice?        @relation(fields: [invoiceId], references: [id])
+
+  @@map("work_orders")
+}
+
+enum WorkOrderStatus {
+  NEW
+  TRIAGED           // AI has categorized and prioritized
+  VENDOR_SEARCH     // Looking for available vendors
+  PENDING_BIDS      // Awaiting vendor bids (for larger jobs)
+  DISPATCHED        // Vendor assigned and notified
+  SCHEDULED         // Vendor confirmed time
+  IN_PROGRESS       // Vendor checked in on-site
+  PENDING_REVIEW    // Work done, awaiting photo/invoice review
+  COMPLETED
+  CANCELLED
+  ON_HOLD
+  ESCALATED         // Needs human attention
+}
+
+enum WorkOrderCategory {
+  PLUMBING
+  ELECTRICAL
+  HVAC
+  APPLIANCE
+  STRUCTURAL
+  PEST_CONTROL
+  LANDSCAPING
+  CLEANING
+  PAINTING
+  FLOORING
+  ROOFING
+  SECURITY
+  ELEVATOR
+  FIRE_SAFETY
+  GENERAL_MAINTENANCE
+  EMERGENCY
+  OTHER
+}
+
+enum Priority {
+  EMERGENCY   // < 4 hours (no heat, flooding, security breach)
+  HIGH        // < 24 hours
+  NORMAL      // < 72 hours
+  LOW         // < 7 days
+}
+
+model WorkOrderEvent {
+  id          String   @id @default(cuid())
+  workOrderId String
+  eventType   String   // "status_change", "vendor_assigned", "message_sent", "escalated", etc.
+  description String
+  metadata    Json     @default("{}")
+  actorType   String   // "ai", "user", "vendor", "system"
+  actorId     String?
+  createdAt   DateTime @default(now())
+
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@map("work_order_events")
+}
+
+// ─────────────────────────────────────────────
+// INVOICES & FINANCIAL
+// ─────────────────────────────────────────────
+
+model Invoice {
+  id             String        @id @default(cuid())
+  organizationId String
+  vendorId       String
+  workOrderId    String?       @unique
+  
+  invoiceNumber  String?       // From vendor
+  amount         Float
+  taxAmount      Float         @default(0)
+  totalAmount    Float
+  
+  lineItems      Json          @default("[]")  // [{description, qty, rate, amount}]
+  
+  status         InvoiceStatus @default(PENDING)
+  
+  // AI reconciliation
+  aiReviewed     Boolean       @default(false)
+  aiAnomalyFlag  Boolean       @default(false)
+  aiAnomalyReason String?      // e.g. "Labor hours 3x above benchmark for this trade"
+  approvedAmount Float?        // May differ if disputed
+  
+  invoiceDate    DateTime?
+  dueDate        DateTime?
+  paidAt         DateTime?
+  
+  documentUrl    String?       // S3 URL of invoice PDF
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  workOrders     WorkOrder[]
+
+  @@map("invoices")
+}
+
+enum InvoiceStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  DISPUTED
+  PAID
+  VOID
+}
+
+// ─────────────────────────────────────────────
+// COMPLIANCE
+// ─────────────────────────────────────────────
+
+model Jurisdiction {
+  id          String   @id @default(cuid())
+  organizationId String
+  name        String   // "New York City", "Los Angeles County"
+  state       String
+  country     String   @default("US")
+  rules       Json     // Full compliance rulebook (notice periods, habitability codes, etc.)
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  properties   Property[]
+  complianceTasks ComplianceTask[]
+
+  @@map("jurisdictions")
+}
+
+model ComplianceTask {
+  id             String           @id @default(cuid())
+  organizationId String
+  propertyId     String
+  jurisdictionId String?
+  
+  taskType       ComplianceTaskType
+  title          String
+  description    String?
+  
+  dueDate        DateTime
+  completedAt    DateTime?
+  
+  status         ComplianceStatus @default(UPCOMING)
+  
+  assignedVendorId String?
+  documentUrl    String?          // Proof of completion
+  
+  // AI generated
+  noticeLanguage String?          // AI-generated legal notice text
+  remindersSent  Int              @default(0)
+  lastReminderAt DateTime?
+  
+  recurrence     String?          // cron expression for recurring tasks
+  
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  property       Property         @relation(fields: [propertyId], references: [id])
+  jurisdiction   Jurisdiction?    @relation(fields: [jurisdictionId], references: [id])
+
+  @@map("compliance_tasks")
+}
+
+enum ComplianceTaskType {
+  ELEVATOR_INSPECTION
+  FIRE_SPRINKLER_TEST
+  FIRE_ALARM_TEST
+  BOILER_INSPECTION
+  GAS_LINE_INSPECTION
+  LEAD_PAINT_INSPECTION
+  MOLD_INSPECTION
+  HABITABILITY_NOTICE
+  RENT_INCREASE_NOTICE
+  LEASE_RENEWAL_NOTICE
+  ENTRY_NOTICE
+  EVICTION_NOTICE
+  CERTIFICATE_OF_OCCUPANCY
+  ENERGY_AUDIT
+  BACKFLOW_PREVENTER_TEST
+  PEST_INSPECTION
+  ROOF_INSPECTION
+  CUSTOM
+}
+
+enum ComplianceStatus {
+  UPCOMING       // > 30 days out
+  DUE_SOON       // ≤ 30 days
+  OVERDUE
+  COMPLETED
+  AT_RISK        // Approaching deadline with no vendor confirmed
+  WAIVED
+}
+
+// ─────────────────────────────────────────────
+// CAPITAL PLANNING (Standout Feature)
+// ─────────────────────────────────────────────
+
+model CapitalPlanItem {
+  id          String   @id @default(cuid())
+  propertyId  String
+  category    WorkOrderCategory
+  component   String   // e.g. "Roof - Building A", "HVAC Unit 3B"
+  
+  // AI-derived from work order history
+  lastReplacedYear Int?
+  estimatedLifeYears Int?
+  currentAge   Int?
+  failureSignals Int   @default(0)  // # of related repairs in past 2 years
+  
+  projectedReplacementYear Int?
+  estimatedCost Float?
+  priority     Priority @default(NORMAL)
+  
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  property     Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@map("capital_plan_items")
+}
+
+// ─────────────────────────────────────────────
+// AI AGENT INFRASTRUCTURE
+// ─────────────────────────────────────────────
+
+model AgentLog {
+  id             String      @id @default(cuid())
+  organizationId String
+  workflowType   String      // "maintenance", "vendor_dispatch", "compliance", etc.
+  
+  // Input
+  triggerType    String      // "inbound_email", "inbound_sms", "scheduled", "webhook"
+  triggerId      String?     // ID of the message/event that triggered this
+  
+  // Execution
+  status         AgentStatus @default(RUNNING)
+  steps          Json        @default("[]")  // Array of {tool, input, output, timestamp}
+  finalAction    String?     // What the agent ultimately decided to do
+  reasoning      String?     // AI's chain of thought (last step)
+  
+  // Outcome
+  workOrderId    String?
+  escalationId   String?
+  reviewedById   String?
+  reviewedAt     DateTime?
+  
+  tokensUsed     Int         @default(0)
+  durationMs     Int?
+  
+  error          String?
+  createdAt      DateTime    @default(now())
+  completedAt    DateTime?
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  reviewedBy     User?        @relation("AgentLogReviewer", fields: [reviewedById], references: [id])
+
+  @@map("agent_logs")
+}
+
+enum AgentStatus {
+  RUNNING
+  COMPLETED
+  ESCALATED
+  FAILED
+}
+
+model Escalation {
+  id             String           @id @default(cuid())
+  organizationId String
+  agentLogId     String?
+  workOrderId    String?
+  
+  reason         EscalationReason
+  description    String           // Human-readable description of why it was escalated
+  context        Json             // Full context the AI assembled for the human reviewer
+  suggestedAction String?         // AI's recommendation for the human
+  
+  assigneeId     String?          // Which user should handle it
+  status         EscalationStatus @default(OPEN)
+  resolvedAt     DateTime?
+  resolution     String?
+  
+  priority       Priority         @default(NORMAL)
+  
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization   Organization     @relation(fields: [organizationId], references: [id])
+  assignee       User?            @relation("EscalationAssignee", fields: [assigneeId], references: [id])
+
+  @@map("escalations")
+}
+
+enum EscalationReason {
+  LEGAL_RISK           // Fair housing, eviction, legal language detected
+  HIGH_COST            // Invoice/PO above approval threshold
+  HOSTILE_TENANT       // Threatening language or legal threat detected
+  EMERGENCY_UNRESOLVED // Emergency maintenance >2hrs without vendor response
+  COMPLIANCE_BREACH    // Overdue compliance task
+  VENDOR_NO_SHOW       // Vendor didn't show up, no backup available
+  AI_LOW_CONFIDENCE    // Agent confidence below threshold
+  MANUAL_REQUEST       // Human manually escalated
+  REPEATED_ISSUE       // Same issue recurring on same unit
+  INSURANCE_CLAIM      // Damage suggesting insurance claim needed
+}
+
+enum EscalationStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  DISMISSED
+}
+
+// ─────────────────────────────────────────────
+// PMS INTEGRATIONS
+// ─────────────────────────────────────────────
+
+model PmsConnection {
+  id             String      @id @default(cuid())
+  organizationId String
+  pmsType        PmsType
+  credentials    Json        // Encrypted at application layer before storing
+  webhookSecret  String?
+  lastSyncAt     DateTime?
+  syncStatus     String?
+  isActive       Boolean     @default(true)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, pmsType])
+  @@map("pms_connections")
+}
+
+enum PmsType {
+  APPFOLIO
+  YARDI
+  BUILDIUM
+  RENTVINE
+  PROPERTYWARE
+}
+```
+
+---
+
+## Indexes to Add After Migration
+
+```sql
+-- Performance indexes
+CREATE INDEX idx_work_orders_org_status ON work_orders(organization_id, status);
+CREATE INDEX idx_work_orders_property_created ON work_orders(property_id, created_at DESC);
+CREATE INDEX idx_messages_thread ON messages(thread_id, created_at DESC);
+CREATE INDEX idx_tenant_org_active ON tenants(organization_id) WHERE is_active = true;
+CREATE INDEX idx_compliance_due ON compliance_tasks(organization_id, due_date, status);
+CREATE INDEX idx_agent_logs_org_created ON agent_logs(organization_id, created_at DESC);
+CREATE INDEX idx_escalations_status ON escalations(organization_id, status, priority);
+CREATE INDEX idx_vendor_trades ON vendors USING GIN(trades);
+
+-- Vector similarity search for tenant history
+CREATE INDEX idx_tenant_embeddings_vector 
+  ON tenant_embeddings USING ivfflat (embedding vector_cosine_ops)
+  WITH (lists = 100);
+```
