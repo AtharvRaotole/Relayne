@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Wrench, Bot, AlertTriangle, ShieldCheck } from "lucide-react";
 import { mockWorkOrders, mockDailyActivity, mockEscalations } from "@/lib/api/mock-data";
+import { DemoTriggerButton } from "@/components/dashboard/DemoTriggerButton";
 import {
   AreaChart,
   Area,
@@ -60,6 +62,26 @@ function StatCard({
 }
 
 export default function OverviewPage() {
+  const [demoContext, setDemoContext] = useState<{
+    demoTenantId: string;
+    demoPropertyId: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!baseUrl) return;
+    fetch(`${baseUrl}/demo/context`, {
+      headers: { "x-demo-mode": "demo-propos-2024" },
+    })
+      .then((r) => r.json())
+      .then((json) => {
+        if (json?.success && json?.data) {
+          setDemoContext(json.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   return (
     <div className="space-y-6">
       {/* KPI cards */}
@@ -217,10 +239,18 @@ export default function OverviewPage() {
 
       {/* Recent work orders */}
       <div className="rounded-xl border border-gray-100 bg-white shadow-[0_0_0_1px_rgb(0,0,0,0.04),0_2px_8px_rgb(0,0,0,0.06)] overflow-hidden">
-        <div className="border-b border-gray-100 px-5 py-4">
-          <h3 className="text-sm font-semibold text-gray-900">
-            Recent Work Orders
-          </h3>
+        <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4">
+          <h3 className="text-sm font-semibold text-gray-900">Recent Work Orders</h3>
+          {demoContext ? (
+            <DemoTriggerButton
+              label="Demo: Simulate Tenant Request"
+              message="Hi, my HVAC stopped working last night, it's really hot. Unit 4B. - Marcus"
+              tenantId={demoContext.demoTenantId}
+              propertyId={demoContext.demoPropertyId}
+            />
+          ) : (
+            <span className="text-xs text-gray-400">Loading demo…</span>
+          )}
         </div>
         <table className="w-full">
           <thead>

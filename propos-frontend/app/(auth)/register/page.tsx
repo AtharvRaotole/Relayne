@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +9,16 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+function slugFromOrgName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "") || "my-organization";
+}
 
 const step1Schema = z.object({
   orgName: z.string().min(2, "Organization name is required"),
@@ -35,8 +46,10 @@ const PLANS = [
 ];
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [orgName, setOrgName] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const step1Form = useForm<Step1Form>({
     resolver: zodResolver(step1Schema),
@@ -57,8 +70,51 @@ export default function RegisterPage() {
   });
   const onStep2 = step2Form.handleSubmit(() => setStep(3));
   const onStep3 = step3Form.handleSubmit(async (data) => {
-    await new Promise((r) => setTimeout(r, 500));
-    console.log({ orgName, plan: step2Form.getValues("plan"), ...data });
+    setSubmitError(null);
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!baseUrl) {
+      setSubmitError("API not configured. Check .env.local.");
+      return;
+    }
+    const organizationSlug = slugFromOrgName(orgName);
+    try {
+      const res = await fetch(`${baseUrl}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          organizationName: orgName.trim(),
+          organizationSlug,
+          email: data.email.trim(),
+          password: data.password,
+          firstName: data.firstName.trim(),
+          lastName: data.lastName.trim(),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        const code = json?.error?.code;
+        const msg =
+          code === "CONFLICT"
+            ? json?.error?.message ?? "This organization or email is already in use."
+            : json?.error?.message ?? "Something went wrong. Please try again.";
+        setSubmitError(msg);
+        return;
+      }
+      if (json.success && json.data?.accessToken) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("accessToken", json.data.accessToken);
+          if (json.data.refreshToken) {
+            localStorage.setItem("refreshToken", json.data.refreshToken);
+          }
+        }
+        router.push("/overview");
+        router.refresh();
+      } else {
+        setSubmitError("Invalid response. Please try again.");
+      }
+    } catch {
+      setSubmitError("Network error. Is the backend running?");
+    }
   });
 
   return (
@@ -161,6 +217,11 @@ export default function RegisterPage() {
 
         {step === 3 && (
           <form onSubmit={onStep3} className="mt-6 space-y-4">
+            {submitError && (
+              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
+                {submitError}
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="firstName">First name</Label>

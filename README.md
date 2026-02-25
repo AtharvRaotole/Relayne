@@ -39,6 +39,13 @@ npm run workers:dev
 - **Health:** `GET /health`
 - **Auth:** `POST /api/v1/auth/register`, `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `GET /api/v1/auth/me`
 
+## Docs
+
+- **Setup & keys:** [SETUP_AND_KEYS.md](./SETUP_AND_KEYS.md)
+- **Local testing:** [LOCAL_TEST.md](./LOCAL_TEST.md)
+- **Demo deployment:** [docs/12_DEMO_DEPLOYMENT.md](./docs/12_DEMO_DEPLOYMENT.md)
+- **API, schema, AI agent:** see [docs/](./docs/) for full specs.
+
 ## License
 
 Private

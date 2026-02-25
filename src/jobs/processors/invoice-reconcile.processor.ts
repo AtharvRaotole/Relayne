@@ -1,10 +1,10 @@
 import { Job } from 'bullmq'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { prisma } from '../../lib/prisma'
 import { logger } from '../../lib/logger'
 import { env } from '../../config/env'
 
-const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
+const client = new OpenAI({ apiKey: env.OPENAI_API_KEY })
 
 export async function processInvoiceReconciliation(job: Job) {
   const { invoiceId, organizationId } = job.data as {
@@ -76,13 +76,13 @@ Respond as JSON only, no markdown:
   "lineItemAnalysis": [{ "item": string, "verdict": "ok"|"high"|"suspicious", "note": string }]
 }`
 
-  const response = await client.messages.create({
-    model: 'claude-3-5-haiku-20241022',
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
     max_tokens: 1024,
     messages: [{ role: 'user', content: analysisPrompt }],
   })
 
-  const analysisText = response.content[0].type === 'text' ? response.content[0].text : '{}'
+  const analysisText = response.choices[0]?.message?.content ?? '{}'
   let analysis: {
     hasAnomaly?: boolean
     anomalyReason?: string | null

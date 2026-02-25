@@ -2,12 +2,22 @@ import { FastifyRequest, FastifyReply } from 'fastify'
 import { prisma } from '../../lib/prisma'
 import { hashApiKey } from '../utils/apiKey'
 import { logger } from '../../lib/logger'
+import { env } from '../../config/env'
 
 export async function requireAuth(
   request: FastifyRequest,
   reply: FastifyReply
 ): Promise<void> {
   try {
+    // Demo mode bypass: allow authenticated demo access via header
+    if (env.DEMO_SECRET && env.DEMO_ORG_ID && request.headers['x-demo-mode'] === env.DEMO_SECRET) {
+      request.user = { id: 'demo-user', organizationId: env.DEMO_ORG_ID, role: 'OWNER' } as any
+      request.userId = 'demo-user'
+      request.organizationId = env.DEMO_ORG_ID
+      request.userRole = 'OWNER'
+      return
+    }
+
     const auth = request.headers.authorization
 
     // Try Bearer JWT first

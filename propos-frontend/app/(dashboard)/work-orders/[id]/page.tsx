@@ -1,12 +1,43 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import { mockWorkOrders } from "@/lib/api/mock-data";
+import { getApiBaseUrl, getApiHeaders } from "@/lib/api/client";
 import { PriorityBadge } from "@/components/shared";
 import { StatusBadge } from "@/components/shared";
 import { Button } from "@/components/ui/button";
 import { Bot, UserPlus, MessageSquare, CheckCircle, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
+
+type TimelineEvent = {
+  id: string;
+  eventType: string;
+  description: string;
+  actorType: string;
+  createdAt: string;
+};
+
+type WorkOrderDetail = {
+  id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  priority: string;
+  category: string;
+  createdAt: string;
+  property?: { name: string };
+  unit?: { unitNumber: string };
+  tenant?: { id: string; email?: string | null; firstName?: string; lastName?: string } | null;
+  vendor?: { id: string; companyName?: string; email?: string | null } | null;
+  sourceChannel?: string | null;
+};
+
+const ACTIVITY_TYPE = {
+  TO_TENANT: "to_tenant",
+  TO_VENDOR: "to_vendor",
+  INTERNAL_NOTE: "internal_note",
+} as const;
+type ActivityType = (typeof ACTIVITY_TYPE)[keyof typeof ACTIVITY_TYPE];
 
 export default function WorkOrderDetailPage({
   params,
@@ -14,7 +45,162 @@ export default function WorkOrderDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const wo = mockWorkOrders.find((w) => w.id === id) ?? mockWorkOrders[0];
+  const [wo, setWo] = useState<WorkOrderDetail | null>(null);
+  const [timeline, setTimeline] = useState<TimelineEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [useMock, setUseMock] = useState(false);
+  const [message, setMessage] = useState("");
+  const [activityType, setActivityType] = useState<ActivityType>(ACTIVITY_TYPE.TO_TENANT);
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  const baseUrl = getApiBaseUrl();
+  const headers = getApiHeaders();
+
+  useEffect(() => {
+    if (!baseUrl) {
+      const mock = mockWorkOrders.find((w) => w.id === id) ?? mockWorkOrders[0];
+      setWo(mock as unknown as WorkOrderDetail);
+      setUseMock(true);
+      setLoading(false);
+      return;
+    }
+    Promise.all([
+      fetch(`${baseUrl}/work-orders/${id}`, { headers }).then((r) =>
+        r.ok ? r.json() : Promise.reject(r)
+      ),
+      fetch(`${baseUrl}/work-orders/${id}/timeline`, { headers }).then((r) =>
+        r.ok ? r.json() : { success: true, data: [] }
+      ),
+    ])
+      .then(([detailRes, timelineRes]) => {
+        if (detailRes.success && detailRes.data) {
+          setWo(detailRes.data);
+          setTimeline(Array.isArray(timelineRes?.data) ? timelineRes.data : []);
+        } else {
+          const mock = mockWorkOrders.find((w) => w.id === id) ?? mockWorkOrders[0];
+          setWo(mock as unknown as WorkOrderDetail);
+          setUseMock(true);
+        }
+      })
+      .catch(() => {
+        const mock = mockWorkOrders.find((w) => w.id === id) ?? mockWorkOrders[0];
+        setWo(mock as unknown as WorkOrderDetail);
+        setUseMock(true);
+      })
+      .finally(() => setLoading(false));
+  }, [id, baseUrl]);
+
+  const refetchTimeline = () => {
+    if (!baseUrl || useMock) return;
+    fetch(`${baseUrl}/work-orders/${id}/timeline`, { headers })
+      .then((r) => (r.ok ? r.json() : { data: [] }))
+      .then((json) => setTimeline(Array.isArray(json?.data) ? json.data : []));
+  };
+
+  const handleSend = async () => {
+    const text = message.trim();
+    if (!text) return;
+    if (!baseUrl || useMock) {
+      setSendError("API not configured or using mock data.");
+      return;
+    }
+    setSending(true);
+    setSendError(null);
+    try {
+      if (activityType === ACTIVITY_TYPE.INTERNAL_NOTE) {
+        const res = await fetch(`${baseUrl}/work-orders/${id}/note`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ body: text }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.error?.message || "Failed to add note");
+        }
+        const json = await res.json();
+        setTimeline(Array.isArray(json?.data) ? json.data : []);
+        setMessage("");
+        return;
+      }
+      if (activityType === ACTIVITY_TYPE.TO_TENANT && wo?.tenant?.id) {
+        const to = (wo.tenant as { email?: string }).email ?? "";
+        if (!to) {
+          setSendError("Tenant has no email on file.");
+          return;
+        }
+        const res = await fetch(`${baseUrl}/communications/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({
+            to,
+            channel: "EMAIL",
+            body: text,
+            workOrderId: id,
+            tenantId: wo.tenant.id,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.error?.message || "Failed to send to tenant");
+        }
+        const summary = text.length > 60 ? `${text.slice(0, 60)}…` : text;
+        await fetch(`${baseUrl}/work-orders/${id}/note`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ body: `Message sent to tenant: ${summary}` }),
+        });
+        refetchTimeline();
+        setMessage("");
+        return;
+      }
+      if (activityType === ACTIVITY_TYPE.TO_VENDOR && wo?.vendor?.id) {
+        const to = (wo.vendor as { email?: string }).email ?? "";
+        if (!to) {
+          setSendError("Vendor has no email on file.");
+          return;
+        }
+        const res = await fetch(`${baseUrl}/communications/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({
+            to,
+            channel: "EMAIL",
+            body: text,
+            workOrderId: id,
+            vendorId: wo.vendor.id,
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err?.error?.message || "Failed to send to vendor");
+        }
+        const summary = text.length > 60 ? `${text.slice(0, 60)}…` : text;
+        await fetch(`${baseUrl}/work-orders/${id}/note`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...headers },
+          body: JSON.stringify({ body: `Message sent to vendor: ${summary}` }),
+        });
+        refetchTimeline();
+        setMessage("");
+        return;
+      }
+      if (activityType === ACTIVITY_TYPE.TO_TENANT) setSendError("This work order has no tenant.");
+      else if (activityType === ACTIVITY_TYPE.TO_VENDOR) setSendError("This work order has no vendor.");
+    } catch (e) {
+      setSendError(e instanceof Error ? e.message : "Send failed");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  if (loading || !wo) {
+    return (
+      <div className="p-8 text-center text-sm text-gray-500">
+        {loading ? "Loading…" : "Work order not found."}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -28,7 +214,7 @@ export default function WorkOrderDetailPage({
             {wo.title}
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            {wo.property.name} · Unit {wo.unit?.unitNumber}
+            {wo.property?.name ?? "—"} · Unit {wo.unit?.unitNumber ?? "—"}
           </p>
         </div>
 
@@ -38,7 +224,7 @@ export default function WorkOrderDetailPage({
           <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
             Description
           </h3>
-          <p className="text-sm text-gray-700">{wo.description}</p>
+          <p className="text-sm text-gray-700">{wo.description ?? "—"}</p>
         </div>
 
         <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-[0_0_0_1px_rgb(0,0,0,0.04),0_2px_8px_rgb(0,0,0,0.06)]">
@@ -48,7 +234,7 @@ export default function WorkOrderDetailPage({
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-gray-500">Category</dt>
-              <dd className="font-medium text-gray-900">{wo.category}</dd>
+              <dd className="font-medium text-gray-900">{wo.category?.replace(/_/g, " ") ?? "—"}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-gray-500">Created</dt>
@@ -65,7 +251,7 @@ export default function WorkOrderDetailPage({
           </dl>
         </div>
 
-        {wo.aiHandled && (
+        {wo.sourceChannel && (
           <div className="rounded-lg border border-[var(--brand-100)] bg-[var(--brand-50)] p-3">
             <div className="mb-1 flex items-center gap-2">
               <Bot className="h-4 w-4 text-[var(--brand-600)]" />
@@ -73,9 +259,6 @@ export default function WorkOrderDetailPage({
                 Handled by AI
               </span>
             </div>
-            <p className="text-xs text-[var(--brand-600)]">
-              Confidence: {Math.round((wo.aiConfidence ?? 0) * 100)}%
-            </p>
             <button className="mt-1 text-xs font-medium text-[var(--brand-700)] underline">
               View AI reasoning →
             </button>
@@ -109,25 +292,60 @@ export default function WorkOrderDetailPage({
         <div className="rounded-xl border border-gray-200 p-3 mb-4">
           <textarea
             placeholder="Add a note or send a message..."
-            className="w-full resize-none text-sm outline-none text-gray-700"
+            className="w-full resize-none text-sm outline-none text-gray-700 border-0 focus:ring-0 focus:outline-none"
             rows={2}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
           />
           <div className="mt-2 flex justify-between">
             <div className="flex gap-2">
-              <Button variant="ghost" size="xs">
+              <Button
+                variant="ghost"
+                size="xs"
+                className={activityType === ACTIVITY_TYPE.TO_TENANT ? "bg-gray-100" : ""}
+                onClick={() => setActivityType(ACTIVITY_TYPE.TO_TENANT)}
+              >
                 To Tenant
               </Button>
-              <Button variant="ghost" size="xs">
+              <Button
+                variant="ghost"
+                size="xs"
+                className={activityType === ACTIVITY_TYPE.TO_VENDOR ? "bg-gray-100" : ""}
+                onClick={() => setActivityType(ACTIVITY_TYPE.TO_VENDOR)}
+              >
                 To Vendor
               </Button>
-              <Button variant="ghost" size="xs">
+              <Button
+                variant="ghost"
+                size="xs"
+                className={activityType === ACTIVITY_TYPE.INTERNAL_NOTE ? "bg-gray-100" : ""}
+                onClick={() => setActivityType(ACTIVITY_TYPE.INTERNAL_NOTE)}
+              >
                 Internal Note
               </Button>
             </div>
-            <Button size="xs">Send</Button>
+            <Button size="xs" onClick={handleSend} disabled={sending || !message.trim() || useMock}>
+              {sending ? "Sending…" : "Send"}
+            </Button>
           </div>
+          {sendError && (
+            <p className="mt-2 text-xs text-red-600">{sendError}</p>
+          )}
         </div>
-        <p className="text-sm text-gray-500">No activity yet.</p>
+        {timeline.length === 0 ? (
+          <p className="text-sm text-gray-500">No activity yet.</p>
+        ) : (
+          <ul className="space-y-3">
+            {timeline.map((ev) => (
+              <li key={ev.id} className="border-l-2 border-gray-200 pl-3 py-1">
+                <p className="text-xs text-gray-500">
+                  {format(new Date(ev.createdAt), "MMM d, yyyy HH:mm")} · {ev.eventType.replace(/_/g, " ")}
+                </p>
+                <p className="text-sm text-gray-800">{ev.description}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

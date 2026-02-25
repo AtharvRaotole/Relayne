@@ -1,11 +1,11 @@
 import { Job } from 'bullmq'
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { prisma } from '../../lib/prisma'
 import { logger } from '../../lib/logger'
 import { env } from '../../config/env'
 import type { WorkOrderCategory, Priority } from '@prisma/client'
 
-const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
+const client = new OpenAI({ apiKey: env.OPENAI_API_KEY })
 
 const COMPONENT_LIFESPANS: Partial<
   Record<
@@ -119,13 +119,13 @@ Respond as JSON array only, no markdown:
 
 Only include items with genuine capital planning concern. Skip minor/routine items.`
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o',
     max_tokens: 2048,
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const responseText = response.content[0].type === 'text' ? response.content[0].text : '[]'
+  const responseText = response.choices[0]?.message?.content ?? '[]'
   let items: Array<{
     category: string
     component: string

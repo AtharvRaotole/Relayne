@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import Fastify from 'fastify'
 import { TypeBoxTypeProvider } from '@fastify/type-provider-typebox'
 import cors from '@fastify/cors'
@@ -21,6 +22,7 @@ import { analyticsRoutes } from './modules/analytics/analytics.routes'
 import { escalationRoutes } from './modules/escalations/escalations.routes'
 import { agentRoutes } from './modules/agent/agent.routes'
 import { integrationRoutes } from './modules/integrations/integrations.routes'
+import { demoRoutes } from './modules/demo/demo.routes'
 import { webhookRoutes } from './webhooks/webhook.routes'
 
 export async function buildApp() {
@@ -65,6 +67,7 @@ export async function buildApp() {
   await app.register(escalationRoutes, { prefix: '/api/v1/escalations' })
   await app.register(agentRoutes, { prefix: '/api/v1/agent' })
   await app.register(integrationRoutes, { prefix: '/api/v1/integrations' })
+  await app.register(demoRoutes, { prefix: '/api/v1/demo' })
   await app.register(webhookRoutes, { prefix: '/api/v1/webhooks' })
 
   return app

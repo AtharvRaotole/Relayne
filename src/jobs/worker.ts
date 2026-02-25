@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import { Worker } from 'bullmq'
 import { redis } from '../lib/redis'
 import { processInboundMessage } from './processors/inbound-message.processor'

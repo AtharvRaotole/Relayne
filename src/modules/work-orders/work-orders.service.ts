@@ -292,4 +292,24 @@ export class WorkOrdersService {
       orderBy: { createdAt: 'asc' },
     })
   }
+
+  async addNote(
+    organizationId: string,
+    workOrderId: string,
+    noteText: string,
+    actorId?: string
+  ) {
+    const wo = await prisma.workOrder.findFirst({
+      where: { id: workOrderId, organizationId },
+    })
+    if (!wo) return null
+    await this.addEvent(
+      workOrderId,
+      'note',
+      noteText,
+      actorId ? 'user' : 'system',
+      actorId
+    )
+    return this.getTimeline(organizationId, workOrderId)
+  }
 }

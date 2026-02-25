@@ -314,4 +314,30 @@ export const workOrderRoutes: FastifyPluginAsync = async (app) => {
       return reply.send({ success: true as const, data: events })
     }
   )
+
+  // POST /work-orders/:id/note (internal note on timeline)
+  server.post(
+    '/:id/note',
+    {
+      schema: {
+        params: Type.Object({ id: Type.String() }),
+        body: Type.Object({ body: Type.String() }),
+        response: { 201: Type.Object({ success: Type.Literal(true), data: Type.Array(Type.Any()) }) },
+      },
+    },
+    async (request, reply) => {
+      const orgId = request.organizationId!
+      const userId = (request as { userId?: string }).userId
+      const { id } = request.params as { id: string }
+      const { body } = request.body as { body: string }
+      const events = await service.addNote(orgId, id, body.trim(), userId)
+      if (!events) {
+        return reply.status(404).send({
+          success: false,
+          error: { code: 'NOT_FOUND', message: 'Work order not found' },
+        } as never)
+      }
+      return reply.status(201).send({ success: true as const, data: events })
+    }
+  )
 }

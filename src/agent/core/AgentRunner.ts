@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { prisma } from '../../lib/prisma'
 import { ToolRegistry } from './ToolRegistry'
 import { EscalationEngine } from './EscalationEngine'
@@ -29,7 +29,7 @@ export interface AgentResult {
 }
 
 export class AgentRunner {
-  private client: Anthropic
+  private client: OpenAI
   private organizationId: string
   private toolRegistry: ToolRegistry
   private escalationEngine: EscalationEngine
@@ -37,7 +37,7 @@ export class AgentRunner {
 
   constructor(organizationId: string) {
     this.organizationId = organizationId
-    this.client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
+    this.client = new OpenAI({ apiKey: env.OPENAI_API_KEY })
     this.toolRegistry = new ToolRegistry(organizationId)
     this.escalationEngine = new EscalationEngine(organizationId)
   }
@@ -59,37 +59,47 @@ export class AgentRunner {
 
     try {
       const context = await this.buildContext(input)
-      const messages: Anthropic.MessageParam[] = [
+      const tools = this.toolRegistry.getTools()
+      const messages: OpenAI.ChatCompletionMessageParam[] = [
+        {
+          role: 'system',
+          content: buildSystemPrompt(context),
+        },
         {
           role: 'user',
           content: this.buildUserMessage(input, context),
         },
       ]
-
-      const tools = this.toolRegistry.getTools()
       let iteration = 0
 
       while (iteration < this.maxIterations) {
         iteration++
 
-        const response = await this.client.messages.create({
-          model: 'claude-sonnet-4-5',
+        const response = await this.client.chat.completions.create({
+          model: 'gpt-4o',
           max_tokens: 4096,
-          system: buildSystemPrompt(context),
-          tools,
           messages,
+          tools: tools.map((t) => ({
+            type: 'function' as const,
+            function: {
+              name: t.name,
+              description: t.description,
+              parameters: t.input_schema,
+            },
+          })),
+          tool_choice: 'auto',
         })
 
-        totalTokens += response.usage.input_tokens + response.usage.output_tokens
+        totalTokens +=
+          (response.usage?.prompt_tokens ?? 0) +
+          (response.usage?.completion_tokens ?? 0)
 
-        const textBlocks = response.content.filter((b) => b.type === 'text')
-        const reasoning = textBlocks
-          .map((b) => (b.type === 'text' ? b.text : ''))
-          .join('\n')
+        const choice = response.choices[0]
+        const toolCalls = choice.message.tool_calls ?? []
+        const reasoning = choice.message.content ?? ''
+        const stopReason = choice.finish_reason
 
-        const toolUseBlocks = response.content.filter((b) => b.type === 'tool_use')
-
-        if (toolUseBlocks.length === 0 || response.stop_reason === 'end_turn') {
+        if (toolCalls.length === 0 || stopReason === 'stop') {
           steps.push({
             iteration,
             reasoning,
@@ -117,15 +127,20 @@ export class AgentRunner {
           }
         }
 
-        const toolResults: Anthropic.ToolResultBlockParam[] = []
+        const toolResults: OpenAI.ChatCompletionMessageParam[] = []
         const stepToolCalls: unknown[] = []
 
-        for (const toolUse of toolUseBlocks) {
-          if (toolUse.type !== 'tool_use') continue
+        for (const toolCall of toolCalls) {
+          if (toolCall.type !== 'function') continue
+
+          const args = JSON.parse(toolCall.function.arguments || '{}') as Record<
+            string,
+            unknown
+          >
 
           const escalationCheck = await this.escalationEngine.checkToolCall(
-            toolUse.name,
-            toolUse.input as Record<string, unknown>,
+            toolCall.function.name,
+            args,
             context as Record<string, unknown>
           )
 
@@ -134,7 +149,7 @@ export class AgentRunner {
               agentLogId: agentLog.id,
               reason: escalationCheck.reason,
               description: escalationCheck.description,
-              context: { ...context, pendingToolCall: toolUse },
+              context: { ...context, pendingToolCall: toolCall },
               suggestedAction: escalationCheck.suggestedAction,
             })
 
@@ -159,23 +174,23 @@ export class AgentRunner {
           let toolResult: unknown
           try {
             toolResult = await this.toolRegistry.execute(
-              toolUse.name,
-              toolUse.input as Record<string, unknown>
+              toolCall.function.name,
+              args
             )
           } catch (err) {
             const msg = err instanceof Error ? err.message : 'Unknown error'
             toolResult = { error: msg }
-            logger.error({ toolName: toolUse.name, error: msg }, 'Tool execution failed')
+            logger.error({ toolName: toolCall.function.name, error: msg }, 'Tool execution failed')
           }
 
           stepToolCalls.push({
-            tool: toolUse.name,
-            input: toolUse.input,
+            tool: toolCall.function.name,
+            input: args,
             output: toolResult,
           })
           toolResults.push({
-            type: 'tool_result',
-            tool_use_id: toolUse.id,
+            role: 'tool',
+            tool_call_id: toolCall.id,
             content: JSON.stringify(toolResult),
           })
         }
@@ -186,8 +201,8 @@ export class AgentRunner {
           toolCalls: stepToolCalls,
         })
 
-        messages.push({ role: 'assistant', content: response.content })
-        messages.push({ role: 'user', content: toolResults })
+        messages.push(choice.message as OpenAI.ChatCompletionMessageParam)
+        messages.push(...toolResults)
       }
 
       const escalation = await this.escalationEngine.createEscalation({

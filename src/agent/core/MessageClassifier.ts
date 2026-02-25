@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk'
+import OpenAI from 'openai'
 import { env } from '../../config/env'
 
 export interface MessageClassification {
@@ -16,7 +16,7 @@ export interface MessageClassification {
   hostileScore: number // 0 to 1
 }
 
-const client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY })
+const client = new OpenAI({ apiKey: env.OPENAI_API_KEY })
 
 export async function classifyMessage(body: string): Promise<MessageClassification> {
   const prompt = `Classify this tenant/property message. Return valid JSON only, no markdown.
@@ -30,13 +30,13 @@ Return JSON with:
 - summary: one sentence summary
 - hostileScore: 0 (friendly) to 1 (threatening/legal language/aggressive)`
 
-  const response = await client.messages.create({
-    model: 'claude-3-5-haiku-20241022',
+  const response = await client.chat.completions.create({
+    model: 'gpt-4o-mini',
     max_tokens: 256,
     messages: [{ role: 'user', content: prompt }],
   })
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : '{}'
+  const text = response.choices[0]?.message?.content ?? '{}'
   const cleaned = text.replace(/```json|```/g, '').trim()
 
   try {

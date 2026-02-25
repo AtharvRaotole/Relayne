@@ -15,7 +15,7 @@ const defaults: Record<string, string> = {
   REDIS_URL: 'redis://localhost:6379',
   JWT_SECRET: 'test-jwt-secret-at-least-32-characters-long',
   ENCRYPTION_KEY: '32-character-key-for-credential-encryption!!',
-  ANTHROPIC_API_KEY: 'sk-ant-test-placeholder-key-for-integration-tests',
+  OPENAI_API_KEY: 'sk-test-placeholder-key-for-integration-tests',
   SENDGRID_API_KEY: 'SG.test-placeholder-for-integration-tests-valid-format',
   TWILIO_ACCOUNT_SID: 'ACtestplaceholder',
   TWILIO_AUTH_TOKEN: 'test-token',

@@ -1,4 +1,3 @@
-import type Anthropic from '@anthropic-ai/sdk'
 import * as WorkOrderTools from '../tools/workorder.tools'
 import * as VendorTools from '../tools/vendor.tools'
 import * as CommunicationTools from '../tools/communication.tools'
@@ -12,7 +11,11 @@ export class ToolRegistry {
     this.organizationId = organizationId
   }
 
-  getTools(): Anthropic.Tool[] {
+  getTools(): Array<{
+    name: string
+    description: string
+    input_schema: Record<string, unknown>
+  }> {
     return [
       {
         name: 'create_work_order',

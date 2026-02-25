@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,9 +17,11 @@ const loginSchema = z.object({
 type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors, isSubmitting },
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -26,8 +29,38 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginForm) => {
-    await new Promise((r) => setTimeout(r, 500));
-    console.log(data);
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!baseUrl) {
+      setError("root", { message: "API URL not configured" });
+      return;
+    }
+    try {
+      const res = await fetch(`${baseUrl}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: data.email, password: data.password }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        const msg = json?.error?.message ?? "Login failed";
+        setError("root", { message: msg });
+        return;
+      }
+      if (json.success && json.data?.accessToken) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("accessToken", json.data.accessToken);
+          if (json.data.refreshToken) {
+            localStorage.setItem("refreshToken", json.data.refreshToken);
+          }
+        }
+        router.push("/overview");
+        router.refresh();
+      } else {
+        setError("root", { message: "Invalid response from server" });
+      }
+    } catch (err) {
+      setError("root", { message: "Network error. Is the backend running?" });
+    }
   };
 
   return (
@@ -65,6 +98,11 @@ export default function LoginPage() {
           Enter your credentials to access your account
         </p>
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+          {errors.root && (
+            <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">
+              {errors.root.message}
+            </p>
+          )}
           <div>
             <Label htmlFor="email">Email</Label>
             <Input
