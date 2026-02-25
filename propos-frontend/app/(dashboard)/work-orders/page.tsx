@@ -49,6 +49,7 @@ export default function WorkOrdersPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [properties, setProperties] = useState<{ id: string; name: string }[]>([]);
   const [units, setUnits] = useState<{ id: string; unitNumber: string }[]>([]);
+  const [propertiesLoading, setPropertiesLoading] = useState(false);
   const [form, setForm] = useState({
     propertyId: "",
     unitId: "",
@@ -86,13 +87,19 @@ export default function WorkOrdersPage() {
 
   useEffect(() => {
     if (!createOpen || !baseUrl) return;
-    fetch(`${baseUrl}/properties?limit=100`, { headers })
-      .then((res) => (res.ok ? res.json() : { success: false, data: { items: [] } }))
-      .then((json: { success?: boolean; data?: { items: { id: string; name: string }[] } }) => {
-        if (json.success && json.data?.items) setProperties(json.data.items);
-        else setProperties([]);
+    setPropertiesLoading(true);
+    fetch(`${baseUrl}/properties?page=1&limit=100`, { headers })
+      .then((res) => res.json().catch(() => ({ success: false })))
+      .then((json: { success?: boolean; data?: { items?: { id: string; name: string }[] } }) => {
+        const items = json.success && json.data && Array.isArray(json.data.items)
+          ? json.data.items
+          : Array.isArray((json.data as any)?.items)
+          ? (json.data as { items: { id: string; name: string }[] }).items
+          : [];
+        setProperties(items);
       })
-      .catch(() => setProperties([]));
+      .catch(() => setProperties([]))
+      .finally(() => setPropertiesLoading(false));
   }, [createOpen, baseUrl]);
 
   useEffect(() => {
@@ -101,10 +108,10 @@ export default function WorkOrdersPage() {
       return;
     }
     fetch(`${baseUrl}/properties/${form.propertyId}/units`, { headers })
-      .then((res) => (res.ok ? res.json() : { success: false, data: [] }))
-      .then((json: { success?: boolean; data?: { id: string; unitNumber: string }[] }) => {
-        if (json.success && Array.isArray(json.data)) setUnits(json.data);
-        else setUnits([]);
+      .then((res) => res.json().catch(() => ({ success: false, data: [] })))
+      .then((json: { success?: boolean; data?: Array<{ id: string; unitNumber: string }> }) => {
+        const list = json.success && Array.isArray(json.data) ? json.data : [];
+        setUnits(list);
       })
       .catch(() => setUnits([]));
   }, [form.propertyId, baseUrl]);
@@ -192,12 +199,20 @@ export default function WorkOrdersPage() {
                 value={form.propertyId}
                 onChange={(e) => setForm((f) => ({ ...f, propertyId: e.target.value, unitId: "" }))}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                disabled={propertiesLoading}
               >
-                <option value="">Select property</option>
+                <option value="">
+                  {propertiesLoading ? "Loading…" : "Select property"}
+                </option>
                 {properties.map((p) => (
                   <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
+              {!propertiesLoading && properties.length === 0 && baseUrl && (
+                <p className="mt-1 text-xs text-amber-600">
+                  No properties found. Add a property first or check the backend is running with demo mode.
+                </p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
@@ -205,6 +220,7 @@ export default function WorkOrdersPage() {
                 value={form.unitId}
                 onChange={(e) => setForm((f) => ({ ...f, unitId: e.target.value }))}
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                disabled={!form.propertyId}
               >
                 <option value="">No unit</option>
                 {units.map((u) => (

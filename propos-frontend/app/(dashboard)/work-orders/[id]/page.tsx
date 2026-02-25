@@ -92,7 +92,7 @@ export default function WorkOrderDetailPage({
   }, [id, baseUrl]);
 
   const refetchTimeline = () => {
-    if (!baseUrl || useMock) return;
+    if (!baseUrl) return;
     fetch(`${baseUrl}/work-orders/${id}/timeline`, { headers })
       .then((r) => (r.ok ? r.json() : { data: [] }))
       .then((json) => setTimeline(Array.isArray(json?.data) ? json.data : []));
@@ -101,8 +101,8 @@ export default function WorkOrderDetailPage({
   const handleSend = async () => {
     const text = message.trim();
     if (!text) return;
-    if (!baseUrl || useMock) {
-      setSendError("API not configured or using mock data.");
+    if (!baseUrl) {
+      setSendError("API not configured.");
       return;
     }
     setSending(true);
@@ -324,7 +324,7 @@ export default function WorkOrderDetailPage({
                 Internal Note
               </Button>
             </div>
-            <Button size="xs" onClick={handleSend} disabled={sending || !message.trim() || useMock}>
+            <Button size="xs" onClick={handleSend} disabled={sending || !message.trim()}>
               {sending ? "Sending…" : "Send"}
             </Button>
           </div>
